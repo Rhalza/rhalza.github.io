@@ -78,6 +78,13 @@
             "spectrumColor": "#2CFA1F"
         },
         {
+            "title": "Eclipse of the End",
+            "artist": "Rhalza",
+            "url": "eclipse.mp3",
+            "cover": "eclipse.png",
+            "spectrumColor": "#C800FA"
+        },
+        {
             "title": "Level Up",
             "artist": "Rhalza",
             "url": "level.mp3",
