@@ -1,0 +1,81 @@
+{
+    "songs": [
+        {
+            "title": "Asgore (Rhalza Mix)",
+            "artist": "Rhalza",
+            "url": "asgore.mp3",
+            "cover": "",
+            "spectrumColor": "#E4BA00"
+        },
+        {
+            "title": "Spider Dance (Rhalza Mix)",
+            "artist": "Rhalza",
+            "url": "spider.mp3",
+            "cover": "",
+            "spectrumColor": "#B1B7F0"
+        },
+        {
+            "title": "Tetris (Rhalza Mix)",
+            "artist": "Rhalza",
+            "url": "tetris.mp3",
+            "cover": "tetris.png",
+            "spectrumColor": "#FF0000"
+        },
+        {
+            "title": "Cr1TiKaL WOO (Rhalza Mix)",
+            "artist": "Rhalza",
+            "url": "woo.mp3",
+            "cover": "woo.png",
+            "spectrumColor": "#515463"
+        },
+        {
+            "title": "Glitch Hero",
+            "artist": "Rhalza",
+            "url": "glitch.mp3",
+            "cover": "glitch.png",
+            "spectrumColor": "#F881C2"
+        },
+        {
+            "title": "Surge",
+            "artist": "Rhalza",
+            "url": "surge.mp3",
+            "cover": "",
+            "spectrumColor": "#FFFF33"
+        },
+        {
+            "title": "Gravity Falls (Rhalza Mix)",
+            "artist": "Rhalza",
+            "url": "gravity.mp3",
+            "cover": "gravity.png",
+            "spectrumColor": "#732335"
+        },
+        {
+            "title": "Dream On (Rhalza Mix)",
+            "artist": "Rhalza",
+            "url": "dream.mp3",
+            "cover": "",
+            "spectrumColor": "#20C6D7"
+        },
+        {
+            "title": "Assault",
+            "artist": "Rhalza",
+            "url": "assault.mp3",
+            "cover": "assault.png",
+            "spectrumColor": "#FFDF00"
+        },
+        {
+            "title": "OVERLOAD",
+            "artist": "Rhalza",
+            "url": "overload.mp3",
+            "cover": "overload.png",
+            "spectrumColor": "#2CFA1F"
+        },
+        {
+            "title": "Level Up",
+            "artist": "Rhalza",
+            "url": "level.mp3",
+            "cover": "level.png",
+            "spectrumColor": "#AE0039"
+        }
+    ]
+}
