@@ -50,6 +50,13 @@
             "spectrumColor": "#732335"
         },
         {
+            "title": "Grandest Game",
+            "artist": "Rhalza",
+            "url": "grandest.mp3",
+            "cover": "grandest.png",
+            "spectrumColor": "#B000FF"
+        },
+        {
             "title": "Dream On (Rhalza Mix)",
             "artist": "Rhalza",
             "url": "dream.mp3",
