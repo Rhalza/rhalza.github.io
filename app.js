@@ -54,8 +54,6 @@ document.addEventListener('DOMContentLoaded', () => {
             this.audioContext = null;
             this.analyser = null;
             this.source = null;
-            this.bufferLength = null;
-            this.dataArray = null;
             this.animationFrameId = null;
 
             this.dom = {
@@ -77,7 +75,55 @@ document.addEventListener('DOMContentLoaded', () => {
             
             this.spectrumCtx = this.dom.spectrumCanvas.getContext('2d');
 
-            this.fetchSongs().then(() => { this.loadState(); this.attachEvents(); });
+            this.fetchSongs().then(() => { 
+                this.loadState();
+                this.attachEvents(); 
+            });
+        }
+
+        saveState() {
+            const state = {
+                currentSongIndex: this.currentSongIndex,
+                currentTime: this.audio.currentTime,
+                isPlaying: this.isPlaying,
+                volume: this.audio.volume,
+                muted: this.audio.muted
+            };
+            localStorage.setItem('rhalzaVibesState', JSON.stringify(state));
+        }
+
+        loadState() {
+            const stateJSON = localStorage.getItem('rhalzaVibesState');
+            if (stateJSON) {
+                const state = JSON.parse(stateJSON);
+
+                this.currentSongIndex = state.currentSongIndex;
+                this.audio.volume = state.volume;
+                this.dom.volumeSlider.value = state.volume;
+                this.audio.muted = state.muted;
+                this.updateMuteIcon();
+
+                if (this.currentSongIndex !== -1) {
+                    const song = this.songs[this.currentSongIndex];
+                    this.audio.src = song.url;
+                    this.updatePlayerUI(song);
+                    
+                    this.audio.addEventListener('canplay', () => {
+                        this.audio.currentTime = state.currentTime;
+                        if (state.isPlaying) {
+                            this.play();
+                        }
+                    }, { once: true });
+                }
+            }
+        }
+
+        syncState(state) {
+            if (this.currentSongIndex !== state.currentSongIndex) {
+                this.loadSong(state.currentSongIndex, false);
+            }
+            this.audio.currentTime = state.currentTime;
+            state.isPlaying ? this.play() : this.pause();
         }
 
         setupAudioContext() {
@@ -88,8 +134,6 @@ document.addEventListener('DOMContentLoaded', () => {
             this.source = this.audioContext.createMediaElementSource(this.audio);
             this.source.connect(this.analyser);
             this.analyser.connect(this.audioContext.destination);
-            this.bufferLength = this.analyser.frequencyBinCount;
-            this.dataArray = new Uint8Array(this.bufferLength);
         }
 
         async fetchSongs() {
@@ -121,7 +165,10 @@ document.addEventListener('DOMContentLoaded', () => {
             this.dom.muteBtn.addEventListener('click', () => this.toggleMute());
             this.dom.progressContainer.addEventListener('click', (e) => this.seek(e));
             
-            this.audio.addEventListener('timeupdate', () => this.updateProgress());
+            this.audio.addEventListener('timeupdate', () => {
+                this.updateProgress();
+                this.saveState();
+            });
             this.audio.addEventListener('loadedmetadata', () => this.updateProgress());
             this.audio.addEventListener('ended', () => this.playNext());
 
@@ -156,17 +203,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         visualize() {
-            this.analyser.getByteFrequencyData(this.dataArray);
+            const bufferLength = this.analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            this.analyser.getByteFrequencyData(dataArray);
+
             const canvas = this.dom.spectrumCanvas;
             const ctx = this.spectrumCtx;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            const barWidth = (canvas.width / this.bufferLength) * 1.5;
+            const barWidth = (canvas.width / bufferLength) * 1.5;
             let x = 0;
             const color = this.songs[this.currentSongIndex]?.spectrumColor || '#FFFFFF';
 
-            for (let i = 0; i < this.bufferLength; i++) {
-                const barHeight = (this.dataArray[i] / 255) * canvas.height;
+            for (let i = 0; i < bufferLength; i++) {
+                const barHeight = (dataArray[i] / 255) * canvas.height;
                 ctx.fillStyle = color;
                 ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
                 x += barWidth + 1;
@@ -217,45 +267,12 @@ document.addEventListener('DOMContentLoaded', () => {
             this.dom.songArtist.textContent = song.artist;
         }
 
+
+
         formatTime(seconds) {
             const min = Math.floor(seconds / 60);
             const sec = Math.floor(seconds % 60).toString().padStart(2, '0');
             return `${min}:${sec}`;
-        }
-
-        saveState() {
-            const state = {
-                currentSongIndex: this.currentSongIndex, currentTime: this.audio.currentTime,
-                isPlaying: this.isPlaying, volume: this.audio.volume, muted: this.audio.muted
-            };
-            localStorage.setItem('rhalzaVibesState', JSON.stringify(state));
-        }
-
-        loadState() {
-            const state = JSON.parse(localStorage.getItem('rhalzaVibesState'));
-            if (state) {
-                this.currentSongIndex = state.currentSongIndex;
-                this.audio.volume = state.volume;
-                this.dom.volumeSlider.value = state.volume;
-                this.audio.muted = state.muted;
-                this.updateMuteIcon();
-
-                if (this.currentSongIndex !== -1) {
-                    const song = this.songs[this.currentSongIndex];
-                    this.audio.src = song.url;
-                    this.updatePlayerUI(song);
-                    this.audio.addEventListener('canplay', () => {
-                        this.audio.currentTime = state.currentTime;
-                        if (state.isPlaying) this.play();
-                    }, { once: true });
-                }
-            }
-        }
-
-        syncState(state) {
-            if (this.currentSongIndex !== state.currentSongIndex) this.loadSong(state.currentSongIndex, false);
-            this.audio.currentTime = state.currentTime;
-            state.isPlaying ? this.play() : this.pause();
         }
     }
 
