@@ -1,6 +1,13 @@
 {
     "songs": [
         {
+            "title": "A World Apart",
+            "artist": "Rhalza",
+            "url": "world.mp3",
+            "cover": "",
+            "spectrumColor": "#006A6E"
+        },
+        {
             "title": "Asgore (Rhalza Mix)",
             "artist": "Rhalza",
             "url": "asgore.mp3",
