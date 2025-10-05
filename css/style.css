@@ -1,3 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rhalzaverse</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <div id="particles-js"></div>
+
+    <header>
+        <div class="header-container">
+            <span class="site-title">Rhalzaverse</span>
+            <div class="hamburger-icon" id="hamburger-icon">
+                <div class="bar1"></div>
+                <div class="bar2"></div>
+                <div class="bar3"></div>
+            </div>
+        </div>
+    </header>
+
+    <nav id="side-menu">
+        <!-- Menu content will be dynamically inserted here -->
+    </nav>
+
+    <main>
+        <section class="glass-effect">
+            <h2>Welcome to the Universe</h2>
+            <p>This is a content section with a semi-transparent glass effect. The background is dynamically generated with JavaScript. The menu and footer content are loaded from JSON files.</p>
+        </section>
+    </main>
+
+    <footer>
+        <div id="footer-content">
+            <!-- Footer content will be dynamically inserted here -->
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script src="js/common.js"></script>
+
+</body>
+</html>```
+
+---
+
+### `css/style.css` (Updated)
+
+This is the updated stylesheet with the z-index fix for the hamburger icon.
+
+```css
 :root {
     --header-footer-bg: #222831; /* Asphalt Gray */
     --gradient-start: #ff4b5c; /* Retro Sunset Red Violet */
@@ -56,8 +109,8 @@ header {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    position: relative;
-    z-index: 1002;
+    position: relative; /* New: To enable z-index */
+    z-index: 1002;      /* New: Higher than the side menu */
 }
 
 .bar1, .bar2, .bar3 {
