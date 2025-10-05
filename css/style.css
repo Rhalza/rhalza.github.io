@@ -32,16 +32,8 @@ header, footer {
     z-index: 1000;
 }
 
-header {
-    top: 0;
-    height: 70px;
-}
-
-footer {
-    bottom: 0;
-    height: 60px;
-    text-align: center;
-}
+header { top: 0; height: 70px; }
+footer { bottom: 0; height: 60px; text-align: center; }
 
 .header-container {
     display: flex;
@@ -67,12 +59,7 @@ footer {
     justify-content: space-between;
 }
 
-.bar {
-    width: 35px;
-    height: 4px;
-    background-color: white;
-    border-radius: 2px;
-}
+.bar { width: 35px; height: 4px; background-color: white; border-radius: 2px; }
 
 #side-menu {
     height: 100%;
@@ -89,9 +76,7 @@ footer {
     padding-top: 60px;
 }
 
-#side-menu.open {
-    width: 280px;
-}
+#side-menu.open { width: 280px; }
 
 #side-menu .close-btn {
     position: absolute;
@@ -103,9 +88,7 @@ footer {
     transition: color 0.3s;
 }
 
-#side-menu .close-btn:hover {
-    color: #fff;
-}
+#side-menu .close-btn:hover { color: #fff; }
 
 .glass-effect {
     background: rgba(44, 62, 80, 0.5);
@@ -116,19 +99,20 @@ footer {
     padding: 20px;
 }
 
-/* New Styles for Viewer Page */
+/* --- Styles for Viewer Page --- */
 .viewer-main {
     display: flex;
     justify-content: center;
     align-items: center;
     padding: 20px;
+    box-sizing: border-box;
     min-height: calc(100vh - 130px); /* Full height minus header/footer */
 }
 
 .program-panel {
-    width: 90%;
-    max-width: 1200px;
-    height: 75vh;
+    width: 95%;
+    max-width: 1400px;
+    height: 80vh;
     display: flex;
     flex-direction: column;
 }
@@ -138,44 +122,11 @@ footer {
     border-bottom: 1px solid rgba(255, 255, 255, 0.3);
     margin-bottom: 15px;
     font-weight: bold;
+    color: #eee;
 }
 
-#program-frame {
-    flex-grow: 1; /* Take up available space */
+.program-panel iframe {
+    flex-grow: 1; /* Make iframe fill available vertical space */
     width: 100%;
-    background-color: #fff; /* White background for visibility */
     border-radius: 8px;
-    margin-bottom: 15px;
-}
-
-#code-input {
-    height: 100px;
-    width: 100%;
-    background-color: rgba(0, 0, 0, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 8px;
-    color: white;
-    font-family: 'Courier New', Courier, monospace;
-    font-size: 14px;
-    resize: vertical;
-    padding: 10px;
-    box-sizing: border-box;
-    margin-bottom: 15px;
-}
-
-#render-btn {
-    padding: 12px 20px;
-    border: none;
-    border-radius: 8px;
-    background: linear-gradient(60deg, var(--gradient-mid), var(--gradient-end));
-    color: white;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-#render-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
 }
