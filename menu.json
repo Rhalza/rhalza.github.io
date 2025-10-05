@@ -1,36 +1,36 @@
 {
     "sections": [
-        {
-            "name": "Services"
-        },
-        {
-            "name": "About"
-        }
+        { "name": "Services" },
+        { "name": "About Us" }
     ],
     "pages": [
         {
             "name": "Web Development",
-            "url": "/web-dev.html",
+            "url": "#web-dev",
             "section": "Services"
         },
         {
-            "name": "Graphic Design",
-            "url": "/design.html",
+            "name": "Cloud Solutions",
+            "url": "#cloud",
             "section": "Services"
         },
         {
-            "name": "Our Team",
-            "url": "/team.html",
-            "section": "About"
+            "name": "Our Mission",
+            "url": "#mission",
+            "section": "About Us"
         },
         {
-            "name": "Company History",
-            "url": "/history.html",
-            "section": "About"
+            "name": "The Team",
+            "url": "#team",
+            "section": "About Us"
+        },
+        {
+            "name": "Portfolio",
+            "url": "#portfolio"
         },
         {
             "name": "Contact",
-            "url": "/contact.html"
+            "url": "#contact"
         }
     ]
 }
