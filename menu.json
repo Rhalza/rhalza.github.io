@@ -16,27 +16,12 @@
     "pages": [
         {
             "name": "Home",
-            "url": "#home",
+            "url": "index.html",
             "section": "main"
         },
         {
-            "name": "About Me",
-            "url": "#about",
-            "section": "main"
-        },
-        {
-            "name": "Services",
-            "url": "#services",
-            "section": "main"
-        },
-        {
-            "name": "Web Apps",
-            "url": "#web-apps",
-            "section": "projects"
-        },
-        {
-            "name": "Design Work",
-            "url": "#design",
+            "name": "Chess w/ Bot",
+            "url": "chess.html",
             "section": "projects"
         },
         {
