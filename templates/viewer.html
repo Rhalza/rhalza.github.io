@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rhalzaverse - Program Viewer</title>
+    <title>Rhalzaverse - Project Viewer</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -29,11 +29,13 @@
     <main class="viewer-main">
         <div class="program-panel glass-effect">
             <div class="panel-header">
-                <span>HTML5 Program Output</span>
+                <!-- You can change this title for each project -->
+                <span>Project Showcase: My First Program</span>
             </div>
-            <iframe id="program-frame" sandbox="allow-scripts allow-same-origin" frameborder="0"></iframe>
-            <textarea id="code-input" placeholder="Paste your full HTML5 code here... (from <!DOCTYPE> to </html>)"></textarea>
-            <button id="render-btn">Render Code</button>
+            <!-- 
+              IMPORTANT: Change the src attribute to point to your program's HTML file.
+            -->
+            <iframe src="programs/my-first-program.html" sandbox="allow-scripts allow-same-origin" frameborder="0"></iframe>
         </div>
     </main>
 
@@ -45,7 +47,6 @@
 
     <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
     <script src="js/common.js"></script>
-    <script src="js/viewer.js"></script>
 
 </body>
 </html>
