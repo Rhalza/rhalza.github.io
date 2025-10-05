@@ -90,48 +90,4 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Initialize ---
     buildMenu();
     buildFooter();
-});```
-
----
-
-### `menu.json`
-
-This file structures the navigation menu. Items with a `section` key will be placed inside the corresponding dropdown. Items without a `section` key will be top-level links.
-
-```json
-{
-    "sections": [
-        { "name": "Services" },
-        { "name": "About Us" }
-    ],
-    "pages": [
-        {
-            "name": "Web Development",
-            "url": "#web-dev",
-            "section": "Services"
-        },
-        {
-            "name": "Cloud Solutions",
-            "url": "#cloud",
-            "section": "Services"
-        },
-        {
-            "name": "Our Mission",
-            "url": "#mission",
-            "section": "About Us"
-        },
-        {
-            "name": "The Team",
-            "url": "#team",
-            "section": "About Us"
-        },
-        {
-            "name": "Portfolio",
-            "url": "#portfolio"
-        },
-        {
-            "name": "Contact",
-            "url": "#contact"
-        }
-    ]
-}
+});
