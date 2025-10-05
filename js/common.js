@@ -20,10 +20,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const hamburgerIcon = document.getElementById('hamburger-icon');
     const sideMenu = document.getElementById('side-menu');
+    const closeBtn = document.getElementById('close-btn');
 
+    // Event listener to OPEN the menu
     hamburgerIcon.addEventListener('click', () => {
-        hamburgerIcon.classList.toggle('change');
-        sideMenu.classList.toggle('open');
+        sideMenu.classList.add('open');
+    });
+
+    // Event listener to CLOSE the menu
+    closeBtn.addEventListener('click', () => {
+        sideMenu.classList.remove('open');
     });
 
     // Fetch and build the menu
@@ -32,16 +38,13 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             const { sections, pages } = data;
             sections.forEach(section => {
-                // Create section container
                 const sectionDiv = document.createElement('div');
                 sectionDiv.className = 'menu-section';
 
-                // Create section title
                 const title = document.createElement('h3');
                 title.textContent = section.name;
                 sectionDiv.appendChild(title);
 
-                // Create list for pages in this section
                 const pageList = document.createElement('ul');
                 pageList.className = 'menu-pages';
                 
@@ -57,7 +60,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 sectionDiv.appendChild(pageList);
                 sideMenu.appendChild(sectionDiv);
 
-                // Add click event for dropdown functionality
                 title.addEventListener('click', () => {
                     pageList.classList.toggle('show');
                 });
