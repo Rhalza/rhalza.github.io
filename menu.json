@@ -1,36 +1,53 @@
 {
     "sections": [
-        { "name": "Services" },
-        { "name": "About Us" }
+        {
+            "id": "main",
+            "name": "Navigation"
+        },
+        {
+            "id": "projects",
+            "name": "My Work"
+        },
+        {
+            "id": "connect",
+            "name": "Connect"
+        }
     ],
     "pages": [
         {
-            "name": "Web Development",
-            "url": "#web-dev",
-            "section": "Services"
+            "name": "Home",
+            "url": "#home",
+            "section": "main"
         },
         {
-            "name": "Cloud Solutions",
-            "url": "#cloud",
-            "section": "Services"
+            "name": "About Me",
+            "url": "#about",
+            "section": "main"
         },
         {
-            "name": "Our Mission",
-            "url": "#mission",
-            "section": "About Us"
+            "name": "Services",
+            "url": "#services",
+            "section": "main"
         },
         {
-            "name": "The Team",
-            "url": "#team",
-            "section": "About Us"
+            "name": "Web Apps",
+            "url": "#web-apps",
+            "section": "projects"
         },
         {
-            "name": "Portfolio",
-            "url": "#portfolio"
+            "name": "Design Work",
+            "url": "#design",
+            "section": "projects"
         },
         {
             "name": "Contact",
-            "url": "#contact"
+            "url": "#contact",
+            "section": "connect"
+        },
+        {
+            "name": "Blog",
+            "url": "#blog",
+            "section": "connect"
         }
     ]
 }
