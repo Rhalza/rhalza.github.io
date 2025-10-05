@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rhalzaverse - Program Viewer</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <div id="particles-js"></div>
+
+    <header>
+        <div class="header-container">
+            <span class="site-title">Rhalzaverse</span>
+            <div class="hamburger-icon" id="hamburger-icon">
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+            </div>
+        </div>
+    </header>
+
+    <nav id="side-menu">
+        <a href="javascript:void(0)" class="close-btn" id="close-btn">&times;</a>
+        <!-- Menu content will be dynamically inserted here by common.js -->
+    </nav>
+
+    <main class="viewer-main">
+        <div class="program-panel glass-effect">
+            <div class="panel-header">
+                <span>HTML5 Program Output</span>
+            </div>
+            <iframe id="program-frame" sandbox="allow-scripts allow-same-origin" frameborder="0"></iframe>
+            <textarea id="code-input" placeholder="Paste your full HTML5 code here... (from <!DOCTYPE> to </html>)"></textarea>
+            <button id="render-btn">Render Code</button>
+        </div>
+    </main>
+
+    <footer>
+        <div id="footer-content">
+            <!-- Footer content will be dynamically inserted here by common.js -->
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script src="js/common.js"></script>
+    <script src="js/viewer.js"></script>
+
+</body>
+</html>
