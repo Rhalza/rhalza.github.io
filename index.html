@@ -4,39 +4,42 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rhalzaverse</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-    <div id="overlay"></div>
+    <div id="particles-js"></div>
 
-    <header class="site-header">
+    <header>
         <div class="header-container">
-            <a href="/" class="site-title gradient-text">Rhalzaverse</a>
-            <button id="hamburger-btn" class="hamburger-menu" aria-label="Open Menu">
-                <span class="bar"></span>
-                <span class="bar"></span>
-                <span class="bar"></span>
-            </button>
+            <span class="site-title">Rhalzaverse</span>
+            <div class="hamburger-icon" id="hamburger-icon">
+                <div class="bar1"></div>
+                <div class="bar2"></div>
+                <div class="bar3"></div>
+            </div>
         </div>
     </header>
 
-    <nav id="side-menu" class="side-nav">
-        <!-- Menu content will be dynamically injected here -->
+    <nav id="side-menu">
+        <!-- Menu content will be dynamically inserted here -->
     </nav>
 
-    <main class="site-content">
-        <section>
-            <h1>Welcome to the Future</h1>
-            <p>This is the main content area. It is fully responsive and will adapt to any screen size. The navigation menu will slide in from the right on all devices.</p>
+    <main>
+        <section class="glass-effect">
+            <h2>Welcome to the Universe</h2>
+            <p>This is a content section with a semi-transparent glass effect. The background is dynamically generated with JavaScript. The menu and footer content are loaded from JSON files.</p>
         </section>
     </main>
 
-    <footer class="site-footer">
-        <!-- Footer content will be dynamically injected here -->
+    <footer>
+        <div id="footer-content">
+            <!-- Footer content will be dynamically inserted here -->
+        </div>
     </footer>
 
-    <script src="script.js"></script>
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script src="js/common.js"></script>
 
 </body>
 </html>
