@@ -1,0 +1,36 @@
+{
+    "sections": [
+        {
+            "name": "Services"
+        },
+        {
+            "name": "About"
+        }
+    ],
+    "pages": [
+        {
+            "name": "Web Development",
+            "url": "/web-dev.html",
+            "section": "Services"
+        },
+        {
+            "name": "Graphic Design",
+            "url": "/design.html",
+            "section": "Services"
+        },
+        {
+            "name": "Our Team",
+            "url": "/team.html",
+            "section": "About"
+        },
+        {
+            "name": "Company History",
+            "url": "/history.html",
+            "section": "About"
+        },
+        {
+            "name": "Contact",
+            "url": "/contact.html"
+        }
+    ]
+}
