@@ -56,6 +56,8 @@ header {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    position: relative;
+    z-index: 1002;
 }
 
 .bar1, .bar2, .bar3 {
