@@ -1,0 +1,132 @@
+body {
+    padding-bottom: 60px;
+    overflow: hidden;
+}
+
+main#ide-container {
+    display: grid;
+    grid-template-columns: 250px 1fr;
+    gap: 10px;
+    height: calc(100vh - 90px);
+    padding: 10px;
+    box-sizing: border-box;
+    margin-top: 70px;
+}
+
+.ide-panel {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    max-width: none;
+}
+
+.ide-panel .panel-header {
+    background-color: rgba(0, 0, 0, 0.3);
+    padding: 8px 15px;
+    font-weight: bold;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    border-top-left-radius: 15px;
+    border-top-right-radius: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.panel-content {
+    padding: 10px;
+    flex-grow: 1;
+    overflow: auto;
+    background-color: transparent;
+}
+
+#editor-container {
+    height: calc(100% - 40px);
+    padding: 0;
+    border-bottom-left-radius: 15px;
+    border-bottom-right-radius: 15px;
+    overflow: hidden;
+}
+
+#file-explorer {
+    grid-column: 1 / 2;
+}
+
+#main-content {
+    grid-column: 2 / 3;
+    display: grid;
+    grid-template-rows: 2fr 1fr;
+    gap: 10px;
+    height: 100%;
+}
+
+#code-editor-panel {
+    grid-row: 1 / 2;
+}
+
+#terminal {
+    grid-row: 2 / 3;
+}
+
+#file-tree ul {
+    list-style-type: none;
+    padding-left: 15px;
+}
+
+#file-tree li {
+    padding: 4px 0;
+    cursor: pointer;
+}
+
+#file-tree li::before {
+    content: '📄';
+    margin-right: 8px;
+}
+
+#file-tree li.folder::before {
+    content: '📁';
+}
+
+#run-button {
+    background: linear-gradient(60deg, var(--gradient-start), var(--gradient-mid), var(--gradient-end));
+    color: white;
+    border: none;
+    padding: 5px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: transform 0.2s;
+}
+
+#run-button:hover {
+    transform: scale(1.05);
+}
+
+#terminal-output {
+    white-space: pre-wrap;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.9em;
+    padding-bottom: 5px;
+}
+
+.terminal-input-container {
+    display: flex;
+    align-items: center;
+    padding: 5px 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.terminal-input-container span {
+    margin-right: 8px;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+#terminal-input {
+    flex-grow: 1;
+    background-color: transparent;
+    border: none;
+    color: white;
+    outline: none;
+    font-family: 'Courier New', Courier, monospace;
+}
