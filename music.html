@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rhalzaverse - My Music</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/music.css">
+</head>
+<body>
+    <div id="particles-js"></div>
+    <header>
+        <div class="header-container">
+            <span class="site-title">Rhalzaverse</span>
+            <div class="hamburger-icon" id="hamburger-icon">
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+            </div>
+        </div>
+    </header>
+    <nav id="side-menu">
+        <a href="javascript:void(0)" class="close-btn" id="close-btn">&times;</a>
+    </nav>
+    <main>
+        <section class="glass-effect" id="song-list-container">
+            <h2>Music Library</h2>
+            <div id="song-list"></div>
+        </section>
+    </main>
+    <div id="music-player-container">
+        <div id="waveform"></div>
+        <div id="player-controls">
+            <div class="song-info">
+                <img src="media/covers/rhalza.png" alt="Album Cover" id="player-cover-art">
+                <div class="text-info">
+                    <span id="player-title">Select a song</span>
+                    <span id="player-artist"></span>
+                </div>
+            </div>
+            <div class="center-controls">
+                <button id="prev-btn" title="Previous">⏮</button>
+                <button id="backward-btn" title="Back 10s">↩</button>
+                <button id="play-pause-btn" title="Play/Pause">▶</button>
+                <button id="forward-btn" title="Forward 10s">↪</button>
+                <button id="next-btn" title="Next">⏭</button>
+            </div>
+            <div class="time-info">
+                <span id="current-time">0:00</span> / <span id="total-time">0:00</span>
+            </div>
+        </div>
+    </div>
+    <footer>
+        <div id="footer-content"></div>
+    </footer>
+    <script src="https://unpkg.com/wavesurfer.js@7"></script>
+    <script src="js/common.js"></script>
+    <script src="js/music.js"></script>
+</body>
+</html>
