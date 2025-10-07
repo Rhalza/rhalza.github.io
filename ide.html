@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rhalzaverse - RyxIDE</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/ide.css">
+</head>
+<body>
+
+    <div id="particles-js"></div>
+
+    <header>
+        <div class="header-container">
+            <span class="site-title">RyxIDE</span>
+            <div class="hamburger-icon" id="hamburger-icon">
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+            </div>
+        </div>
+    </header>
+
+    <nav id="side-menu">
+        <a href="javascript:void(0)" class="close-btn" id="close-btn">&times;</a>
+    </nav>
+
+    <main id="ide-container">
+        <div id="file-explorer" class="ide-panel glass-effect">
+            <div class="panel-header">File Explorer</div>
+            <div id="file-tree" class="panel-content"></div>
+        </div>
+        <div id="main-content">
+            <div id="code-editor-panel" class="ide-panel glass-effect">
+                <div class="panel-header">
+                    <span>Editor</span>
+                    <button id="run-button">Run Code</button>
+                </div>
+                <div id="editor-container" class="panel-content"></div>
+            </div>
+            <div id="terminal" class="ide-panel glass-effect">
+                <div class="panel-header">Console</div>
+                <div id="terminal-output" class="panel-content"></div>
+                <div class="terminal-input-container">
+                    <span>&gt;</span>
+                    <input type="text" id="terminal-input" placeholder="Enter command...">
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div id="footer-content"></div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script src="js/common.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.33.0/min/vs/loader.js"></script>
+    <script src="js/ide/file-explorer.js"></script>
+    <script src="js/ide/terminal.js"></script>
+    <script src="js/ide/editor.js"></script>
+    <script src="js/ide/main.js"></script>
+
+</body>
+</html>
