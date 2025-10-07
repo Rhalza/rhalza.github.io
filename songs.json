@@ -1,0 +1,86 @@
+[
+    {
+        "title": "A World Apart",
+        "artist": "Rhalza",
+        "coverFile": "rhalza.png",
+        "audioFile": "world.mp3"
+    },
+    {
+        "title": "Asgore (Rhalza Mix)",
+        "artist": "Rhalza",
+        "coverFile": "rhalza.png",
+        "audioFile": "asgore.mp3"
+    },
+    {
+        "title": "Spider Dance (Rhalza Mix)",
+        "artist": "Rhalza",
+        "coverFile": "rhalza.png",
+        "audioFile": "spider.mp3"
+    },
+    {
+        "title": "Glitch Hero",
+        "artist": "Rhalza",
+        "coverFile": "glitch.png",
+        "audioFile": "glitch.mp3"
+    },
+    {
+        "title": "Tetris (Rhalza Mix)",
+        "artist": "Rhalza",
+        "coverFile": "tetris.png",
+        "audioFile": "tetris.mp3"
+    },
+    {
+        "title": "Cr1TiKaL WOO (Rhalza Mix)",
+        "artist": "Rhalza",
+        "coverFile": "woo.png",
+        "audioFile": "woo.mp3"
+    },
+    {
+        "title": "Surge",
+        "artist": "Rhalza",
+        "coverFile": "rhalza.png",
+        "audioFile": "surge.mp3"
+    },
+    {
+        "title": "Gravity Falls (Rhalza Mix)",
+        "artist": "Rhalza",
+        "coverFile": "gravity.png",
+        "audioFile": "gravity.mp3"
+    },
+    {
+        "title": "Grandest Game",
+        "artist": "Rhalza",
+        "coverFile": "grandest.png",
+        "audioFile": "grandest.mp3"
+    },
+    {
+        "title": "Dream On (Rhalza Mix)",
+        "artist": "Rhalza",
+        "coverFile": "dream.png",
+        "audioFile": "dream.mp3"
+    },
+    {
+        "title": "Assault",
+        "artist": "Rhalza",
+        "coverFile": "assault.png",
+        "audioFile": "assault.mp3"
+    },
+    {
+        "title": "OVERLOAD",
+        "artist": "Rhalza",
+        "coverFile": "overload.png",
+        "audioFile": "overload.mp3"
+    },
+    {
+        "title": "Eclipse of the End",
+        "artist": "Rhalza",
+        "coverFile": "eclipse.png",
+        "audioFile": "eclipse.mp3"
+    },
+    {
+        "title": "Level Up",
+        "artist": "Rhalza",
+        "coverFile": "level.png",
+        "audioFile": "level.mp3"
+    }
+]
