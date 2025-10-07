@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Physics Sandbox - Shane Studios</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+        #canvas-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+        canvas {
+            display: block;
+        }
+        #controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+        #controls button {
+            margin: 5px 0;
+            display: block;
+            width: 100%;
+        }
+        #controls select, #controls input {
+            margin: 5px 0;
+            width: 100%;
+        }
+        #res-control {
+            display: flex;
+            align-items: center;
+        }
+        #res-control input[type="range"] {
+            flex: 1;
+        }
+        #res-value {
+            margin-left: 10px;
+            min-width: 20px;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
+    <script src="https://unpkg.com/three@0.139.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.139.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+    <div id="canvas-container">
+        <div id="controls">
+            <select id="shape-type">
+                <option value="sphere">Sphere</option>
+                <option value="box">Box</option>
+                <option value="cylinder">Cylinder</option>
+                <option value="cone">Cone</option>
+                <option value="capsule">Capsule</option>
+                <option value="torus">Torus</option>
+                <option value="plane">Plane (Thin Rectangle)</option>
+                <option value="icosahedron">Icosahedron</option>
+                <option value="dodecahedron">Dodecahedron</option>
+                <option value="octahedron">Octahedron</option>
+                <option value="tetrahedron">Tetrahedron</option>
+                <option value="jello">Squishy Cube</option>
+                <option value="squishy-sphere">Squishy Sphere</option>
+                <option value="tesseract">Tesseract (4D Projection)</option>
+            </select>
+            <input type="number" id="size" placeholder="Size (default 1)" min="0.5" max="5" step="0.5">
+            <div id="res-control">
+                <label>Resolution:</label>
+                <input type="range" id="resolution" min="1" max="5" value="2" step="1">
+                <span id="res-value">2</span>
+            </div>
+            <button id="spawn-btn">Spawn Shape</button>
+            <button id="clear-btn">Clear All</button>
+            <button id="toggle-gravity">Toggle Gravity</button>
+            <p>Controls: Orbit camera with mouse. Click and drag to throw objects (hold and release).</p>
+        </div>
+    </div>
+    <script>
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        scene.add(ambientLight);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+        directionalLight.position.set(5, 10, 5);
+        directionalLight.castShadow = true;
+        directionalLight.shadow.mapSize.width = 2048;
+        directionalLight.shadow.mapSize.height = 2048;
+        scene.add(directionalLight);
+        const world = new CANNON.World();
+        world.gravity.set(0, -9.82, 0);
+        world.broadphase = new CANNON.NaiveBroadphase();
+        world.solver.iterations = 20;
+        const meshes = [];
+        const bodies = [];
+        const squishies = [];
+        function addBodyMeshPair(body, mesh) {
+            bodies.push(body);
+            meshes.push(mesh);
+            world.addBody(body);
+            scene.add(mesh);
+        }
+        const groundShape = new CANNON.Plane();
+        const groundBody = new CANNON.Body({ mass: 0 });
+        groundBody.addShape(groundShape);
+        groundBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
+        groundBody.position.set(0, -5, 0);
+        world.addBody(groundBody);
+        const groundMesh = new THREE.Mesh(
+            new THREE.PlaneGeometry(50, 50),
+            new THREE.MeshStandardMaterial({ color: 0xaaaaaa })
+        );
+        groundMesh.rotation.x = -Math.PI / 2;
+        groundMesh.position.y = -5;
+        groundMesh.receiveShadow = true;
+        scene.add(groundMesh);
+        const wallThickness = 1;
+        const wallHeight = 10;
+        const wallWidth = 20;
+        const wallMaterial = new THREE.MeshStandardMaterial({ color: 0x888888 });
+        const backWallBody = new CANNON.Body({ mass: 0 });
+        backWallBody.addShape(new CANNON.Box(new CANNON.Vec3(wallWidth / 2, wallHeight / 2, wallThickness / 2)));
+        backWallBody.position.set(0, wallHeight / 2 - 5, -wallWidth / 2);
+        world.addBody(backWallBody);
+        const backWallMesh = new THREE.Mesh(
+            new THREE.BoxGeometry(wallWidth, wallHeight, wallThickness),
+            wallMaterial
+        );
+        backWallMesh.position.copy(backWallBody.position);
+        backWallMesh.castShadow = true;
+        backWallMesh.receiveShadow = true;
+        scene.add(backWallMesh);
+        const frontWallBody = new CANNON.Body({ mass: 0 });
+        frontWallBody.addShape(new CANNON.Box(new CANNON.Vec3(wallWidth / 2, wallHeight / 2, wallThickness / 2)));
+        frontWallBody.position.set(0, wallHeight / 2 - 5, wallWidth / 2);
+        world.addBody(frontWallBody);
+        const frontWallMesh = new THREE.Mesh(
+            new THREE.BoxGeometry(wallWidth, wallHeight, wallThickness),
+            new THREE.MeshStandardMaterial({ color: 0x888888, transparent: true, opacity: 0.3 })
+        );
+        frontWallMesh.position.copy(frontWallBody.position);
+        frontWallMesh.castShadow = true;
+        frontWallMesh.receiveShadow = true;
+        scene.add(frontWallMesh);
+        const leftWallBody = new CANNON.Body({ mass: 0 });
+        leftWallBody.addShape(new CANNON.Box(new CANNON.Vec3(wallThickness / 2, wallHeight / 2, wallWidth / 2)));
+        leftWallBody.position.set(-wallWidth / 2, wallHeight / 2 - 5, 0);
+        world.addBody(leftWallBody);
+        const leftWallMesh = new THREE.Mesh(
+            new THREE.BoxGeometry(wallThickness, wallHeight, wallWidth),
+            wallMaterial
+        );
+        leftWallMesh.position.copy(leftWallBody.position);
+        leftWallMesh.castShadow = true;
+        leftWallMesh.receiveShadow = true;
+        scene.add(leftWallMesh);
+        const rightWallBody = new CANNON.Body({ mass: 0 });
+        rightWallBody.addShape(new CANNON.Box(new CANNON.Vec3(wallThickness / 2, wallHeight / 2, wallWidth / 2)));
+        rightWallBody.position.set(wallWidth / 2, wallHeight / 2 - 5, 0);
+        world.addBody(rightWallBody);
+        const rightWallMesh = new THREE.Mesh(
+            new THREE.BoxGeometry(wallThickness, wallHeight, wallWidth),
+            wallMaterial
+        );
+        rightWallMesh.position.copy(rightWallBody.position);
+        rightWallMesh.castShadow = true;
+        rightWallMesh.receiveShadow = true;
+        scene.add(rightWallMesh);
+        camera.position.set(0, 5, 15);
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        let selectedBody = null;
+        let mouseConstraint = null;
+        let startMousePos = new THREE.Vector3();
+        let isDragging = false;
+        renderer.domElement.addEventListener('mousedown', onMouseDown);
+        renderer.domElement.addEventListener('mousemove', onMouseMove);
+        renderer.domElement.addEventListener('mouseup', onMouseUp);
+        function onMouseDown(event) {
+            event.preventDefault();
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(scene.children, true);
+            if (intersects.length > 0) {
+                let intersect = intersects[0];
+                let mesh = intersect.object;
+                while (mesh.parent && mesh.parent !== scene) {
+                    mesh = mesh.parent;
+                }
+                let index = meshes.indexOf(mesh);
+                if (index !== -1 && bodies[index].mass > 0) {
+                    selectedBody = bodies[index];
+                    isDragging = true;
+                    startMousePos.copy(intersect.point);
+                    controls.enabled = false;
+                    const localPivot = new THREE.Vector3().subVectors(intersect.point, mesh.position).applyQuaternion(mesh.quaternion.clone().invert());
+                    const pivotA = new CANNON.Vec3(localPivot.x, localPivot.y, localPivot.z);
+                    const mouseBody = new CANNON.Body({ mass: 0 });
+                    world.addBody(mouseBody);
+                    mouseConstraint = new CANNON.PointToPointConstraint(selectedBody, pivotA, mouseBody, new CANNON.Vec3(0,0,0));
+                    world.addConstraint(mouseConstraint);
+                } else if (mesh.userData && mesh.userData.squishy) {
+                    const squishy = mesh.userData.squishy;
+                    let closestParticle = null;
+                    let minDist = Infinity;
+                    const worldPoint = intersect.point;
+                    for (let p of squishy.particles) {
+                        const dist = p.position.distanceTo(worldPoint);
+                        if (dist < minDist) {
+                            minDist = dist;
+                            closestParticle = p;
+                        }
+                    }
+                    if (closestParticle) {
+                        selectedBody = closestParticle;
+                        isDragging = true;
+                        startMousePos.copy(intersect.point);
+                        controls.enabled = false;
+                        const localPivot = new THREE.Vector3().subVectors(intersect.point, closestParticle.position).applyQuaternion(closestParticle.quaternion.clone().invert());
+                        const pivotA = new CANNON.Vec3(localPivot.x, localPivot.y, localPivot.z);
+                        const mouseBody = new CANNON.Body({ mass: 0 });
+                        world.addBody(mouseBody);
+                        mouseConstraint = new CANNON.PointToPointConstraint(selectedBody, pivotA, mouseBody, new CANNON.Vec3(0,0,0));
+                        world.addConstraint(mouseConstraint);
+                    }
+                }
+            }
+        }
+        function onMouseMove(event) {
+            if (isDragging && mouseConstraint) {
+                mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+                raycaster.setFromCamera(mouse, camera);
+                const plane = new THREE.Plane();
+                plane.setFromNormalAndCoplanarPoint(
+                    camera.getWorldDirection(new THREE.Vector3()).negate(),
+                    startMousePos
+                );
+                const intersectPoint = new THREE.Vector3();
+                raycaster.ray.intersectPlane(plane, intersectPoint);
+                mouseConstraint.bodyB.position.copy(intersectPoint);
+            }
+        }
+        function onMouseUp(event) {
+            if (isDragging) {
+                isDragging = false;
+                controls.enabled = true;
+                if (mouseConstraint) {
+                    world.removeConstraint(mouseConstraint);
+                    world.removeBody(mouseConstraint.bodyB);
+                    mouseConstraint = null;
+                    const endMousePos = new THREE.Vector3();
+                    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+                    raycaster.setFromCamera(mouse, camera);
+                    const plane = new THREE.Plane();
+                    plane.setFromNormalAndCoplanarPoint(
+                        camera.getWorldDirection(new THREE.Vector3()).negate(),
+                        startMousePos
+                    );
+                    raycaster.ray.intersectPlane(plane, endMousePos);
+                    const velocity = new CANNON.Vec3(
+                        (endMousePos.x - startMousePos.x) * 10,
+                        (endMousePos.y - startMousePos.y) * 10,
+                        (endMousePos.z - startMousePos.z) * 10
+                    );
+                    selectedBody.velocity.vadd(velocity);
+                }
+                selectedBody = null;
+            }
+        }
+        document.getElementById('resolution').addEventListener('input', (e) => {
+            document.getElementById('res-value').textContent = e.target.value;
+        });
+        const shapeTypeSelect = document.getElementById('shape-type');
+        const sizeInput = document.getElementById('size');
+        const resolutionInput = document.getElementById('resolution');
+        const spawnBtn = document.getElementById('spawn-btn');
+        const clearBtn = document.getElementById('clear-btn');
+        const toggleGravityBtn = document.getElementById('toggle-gravity');
+        let gravityEnabled = true;
+        toggleGravityBtn.textContent = 'Disable Gravity';
+        spawnBtn.addEventListener('click', () => {
+            const type = shapeTypeSelect.value;
+            const size = parseFloat(sizeInput.value) || 1;
+            const resolution = parseInt(resolutionInput.value) || 2;
+            const x = (Math.random() - 0.5) * 10;
+            const y = 5 + Math.random() * 5;
+            const z = (Math.random() - 0.5) * 10;
+            let body, mesh;
+            const mass = 1;
+            const material = new THREE.MeshStandardMaterial({ color: Math.random() * 0xffffff });
+            if (type === 'sphere') {
+                const shape = new CANNON.Sphere(size);
+                body = new CANNON.Body({ mass });
+                body.addShape(shape);
+                const geometry = new THREE.SphereGeometry(size, 32, 32);
+                mesh = new THREE.Mesh(geometry, material);
+            } else if (type === 'box') {
+                const shape = new CANNON.Box(new CANNON.Vec3(size / 2, size / 2, size / 2));
+                body = new CANNON.Body({ mass });
+                body.addShape(shape);
+                const geometry = new THREE.BoxGeometry(size, size, size);
+                mesh = new THREE.Mesh(geometry, material);
+            } else if (type === 'cylinder') {
+                const shape = new CANNON.Cylinder(size, size, size * 2, 32);
+                body = new CANNON.Body({ mass });
+                body.addShape(shape);
+                const geometry = new THREE.CylinderGeometry(size, size, size * 2, 32);
+                mesh = new THREE.Mesh(geometry, material);
+            } else if (type === 'cone') {
+                const shape = new CANNON.Cylinder(0.01, size, size * 2, 32);
+                body = new CANNON.Body({ mass });
+                body.addShape(shape);
+                const geometry = new THREE.ConeGeometry(size, size * 2, 32);
+                mesh = new THREE.Mesh(geometry, material);
+            } else if (type === 'capsule') {
+                body = new CANNON.Body({ mass });
+                const halfHeight = size * 0.5;
+                const radius = size * 0.5;
+                const sphereShape = new CANNON.Sphere(radius);
+                body.addShape(sphereShape, new CANNON.Vec3(0, halfHeight, 0));
+                body.addShape(sphereShape, new CANNON.Vec3(0, -halfHeight, 0));
+                const cylHeight = size - radius * 2;
+                if (cylHeight > 0) {
+                    const cylShape = new CANNON.Cylinder(radius, radius, cylHeight, 12);
+                    body.addShape(cylShape);
+                }
+                const geometry = new THREE.CapsuleGeometry(radius, cylHeight, 4, 8);
+                mesh = new THREE.Mesh(geometry, material);
+            } else if (type === 'torus') {
+                const tube = size / 4;
+                const geometry = new THREE.TorusGeometry(size, tube, 16, 100);
+                const positions = Array.from(geometry.attributes.position.array);
+                const indices = geometry.index ? Array.from(geometry.index.array) : [];
+                const vertices = [];
+                for (let i = 0; i < positions.length; i += 3) {
+                    vertices.push([positions[i], positions[i+1], positions[i+2]]);
+                }
+                const shape = new CANNON.Trimesh(vertices, indices);
+                body = new CANNON.Body({ mass });
+                body.addShape(shape);
+                mesh = new THREE.Mesh(geometry, material);
+            } else if (type === 'plane') {
+                const thickness = 0.1;
+                const shape = new CANNON.Box(new CANNON.Vec3(size / 2, thickness / 2, size / 2));
+                body = new CANNON.Body({ mass });
+                body.addShape(shape);
+                const geometry = new THREE.BoxGeometry(size, thickness, size);
+                mesh = new THREE.Mesh(geometry, material);
+            } else if (type === 'icosahedron') {
+                const geometry = new THREE.IcosahedronGeometry(size);
+                const positions = Array.from(geometry.attributes.position.array);
+                const indices = Array.from(geometry.index.array);
+                const vertices = [];
+                for (let i = 0; i < positions.length; i += 3) {
+                    vertices.push([positions[i], positions[i+1], positions[i+2]]);
+                }
+                const shape = new CANNON.Trimesh(vertices, indices);
+                body = new CANNON.Body({ mass });
+                body.addShape(shape);
+                mesh = new THREE.Mesh(geometry, material);
+            } else if (type === 'dodecahedron') {
+                const geometry = new THREE.DodecahedronGeometry(size);
+                const positions = Array.from(geometry.attributes.position.array);
+                const indices = Array.from(geometry.index.array);
+                const vertices = [];
+                for (let i = 0; i < positions.length; i += 3) {
+                    vertices.push([positions[i], positions[i+1], positions[i+2]]);
+                }
+                const shape = new CANNON.Trimesh(vertices, indices);
+                body = new CANNON.Body({ mass });
+                body.addShape(shape);
+                mesh = new THREE.Mesh(geometry, material);
+            } else if (type === 'octahedron') {
+                const geometry = new THREE.OctahedronGeometry(size);
+                const positions = Array.from(geometry.attributes.position.array);
+                const indices = Array.from(geometry.index.array);
+                const vertices = [];
+                for (let i = 0; i < positions.length; i += 3) {
+                    vertices.push([positions[i], positions[i+1], positions[i+2]]);
+                }
+                const shape = new CANNON.Trimesh(vertices, indices);
+                body = new CANNON.Body({ mass });
+                body.addShape(shape);
+                mesh = new THREE.Mesh(geometry, material);
+            } else if (type === 'tetrahedron') {
+                const geometry = new THREE.TetrahedronGeometry(size);
+                const positions = Array.from(geometry.attributes.position.array);
+                const indices = Array.from(geometry.index.array);
+                const vertices = [];
+                for (let i = 0; i < positions.length; i += 3) {
+                    vertices.push([positions[i], positions[i+1], positions[i+2]]);
+                }
+                const shape = new CANNON.Trimesh(vertices, indices);
+                body = new CANNON.Body({ mass });
+                body.addShape(shape);
+                mesh = new THREE.Mesh(geometry, material);
+            } else if (type === 'jello' || type === 'squishy-sphere') {
+                createSquishyObject(type, x, y, z, size, resolution);
+                return;
+            } else if (type === 'tesseract') {
+                const tesseract = createTesseract(size);
+                body = tesseract.body;
+                mesh = tesseract.mesh;
+                tesseracts.push(tesseract);
+            }
+            if (body && mesh && type !== 'tesseract') {
+                body.position.set(x, y, z);
+                body.angularVelocity.set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                addBodyMeshPair(body, mesh);
+            } else if (body && mesh && type === 'tesseract') {
+                body.position.set(x, y, z);
+                body.angularVelocity.set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5);
+                mesh.castShadow = true;
+                addBodyMeshPair(body, mesh);
+            }
+        });
+        clearBtn.addEventListener('click', () => {
+            for (let i = meshes.length - 1; i >= 0; i--) {
+                if (bodies[i].mass > 0) {
+                    world.removeBody(bodies[i]);
+                    scene.remove(meshes[i]);
+                    meshes.splice(i, 1);
+                    bodies.splice(i, 1);
+                }
+            }
+            squishies.forEach(s => {
+                s.particles.forEach(p => world.removeBody(p));
+                scene.remove(s.renderMesh);
+            });
+            squishies = [];
+            tesseracts.forEach(tess => {
+                world.removeBody(tess.body);
+                scene.remove(tess.mesh);
+            });
+            tesseracts = [];
+            for (let i = world.constraints.length - 1; i >= 0; i--) {
+                world.removeConstraint(world.constraints[i]);
+            }
+        });
+        toggleGravityBtn.addEventListener('click', () => {
+            gravityEnabled = !gravityEnabled;
+            world.gravity.set(0, gravityEnabled ? -9.82 : 0, 0);
+            toggleGravityBtn.textContent = gravityEnabled ? 'Disable Gravity' : 'Enable Gravity';
+        });
+        function createSquishyObject(type, x, y, z, size, resolution) {
+            let geometry;
+            if (type === 'jello') {
+                geometry = new THREE.BoxGeometry(size, size, size, resolution, resolution, resolution);
+            } else if (type === 'squishy-sphere') {
+                geometry = new THREE.SphereGeometry(size / 2, resolution * 4, resolution * 2);
+            }
+            const pos = geometry.attributes.position.array;
+            const index = geometry.index ? geometry.index.array : [];
+            const posToId = new Map();
+            let vertexId = 0;
+            const uniqueVertices = [];
+            for (let i = 0; i < pos.length; i += 3) {
+                const key = pos[i].toFixed(6) + ',' + pos[i + 1].toFixed(6) + ',' + pos[i + 2].toFixed(6);
+                if (!posToId.has(key)) {
+                    posToId.set(key, vertexId);
+                    uniqueVertices.push([pos[i], pos[i + 1], pos[i + 2]]);
+                    vertexId++;
+                }
+            }
+            const numVertices = uniqueVertices.length;
+            const particles = [];
+            for (let v = 0; v < numVertices; v++) {
+                const [px, py, pz] = uniqueVertices[v];
+                const particleBody = new CANNON.Body({ mass: 0.001 });
+                particleBody.addShape(new CANNON.Sphere(0.001));
+                particleBody.position.set(x + px, y + py, z + pz);
+                particleBody.linearDamping = 0.05;
+                particleBody.angularDamping = 0.05;
+                particles.push(particleBody);
+                world.addBody(particleBody);
+            }
+            const constraints = [];
+            const addedEdges = new Set();
+            for (let i = 0; i < index.length; i += 3) {
+                const ia = index[i] * 3;
+                const ib = index[i + 1] * 3;
+                const ic = index[i + 2] * 3;
+                const a = posToId.get(pos[ia].toFixed(6) + ',' + pos[ia + 1].toFixed(6) + ',' + pos[ia + 2].toFixed(6));
+                const b = posToId.get(pos[ib].toFixed(6) + ',' + pos[ib + 1].toFixed(6) + ',' + pos[ib + 2].toFixed(6));
+                const c = posToId.get(pos[ic].toFixed(6) + ',' + pos[ic + 1].toFixed(6) + ',' + pos[ic + 2].toFixed(6));
+                const edgeAB = Math.min(a, b) + ',' + Math.max(a, b);
+                const edgeBC = Math.min(b, c) + ',' + Math.max(b, c);
+                const edgeCA = Math.min(c, a) + ',' + Math.max(c, a);
+                if (!addedEdges.has(edgeAB)) {
+                    addedEdges.add(edgeAB);
+                    const dist = particles[a].position.distanceTo(particles[b].position);
+                    constraints.push(new CANNON.DistanceConstraint(particles[a], particles[b], dist, 100));
+                }
+                if (!addedEdges.has(edgeBC)) {
+                    addedEdges.add(edgeBC);
+                    const dist = particles[b].position.distanceTo(particles[c].position);
+                    constraints.push(new CANNON.DistanceConstraint(particles[b], particles[c], dist, 100));
+                }
+                if (!addedEdges.has(edgeCA)) {
+                    addedEdges.add(edgeCA);
+                    const dist = particles[c].position.distanceTo(particles[a].position);
+                    constraints.push(new CANNON.DistanceConstraint(particles[c], particles[a], dist, 100));
+                }
+            }
+            for (let i = 0; i < numVertices; i++) {
+                for (let j = i + 1; j < numVertices; j++) {
+                    const dist = particles[i].position.distanceTo(particles[j].position);
+                    if (dist > size * 0.5 && dist < size * 1.5) {
+                        constraints.push(new CANNON.DistanceConstraint(particles[i], particles[j], dist, 30));
+                    }
+                }
+            }
+            constraints.forEach(c => world.addConstraint(c));
+            const renderGeometry = new THREE.BufferGeometry();
+            const renderPositions = new Float32Array(numVertices * 3);
+            for (let v = 0; v < numVertices; v++) {
+                const [px, py, pz] = uniqueVertices[v];
+                renderPositions[v * 3] = px;
+                renderPositions[v * 3 + 1] = py;
+                renderPositions[v * 3 + 2] = pz;
+            }
+            renderGeometry.setAttribute('position', new THREE.BufferAttribute(renderPositions, 3));
+            const renderIndices = [];
+            for (let i = 0; i < index.length; i++) {
+                const origIndex = index[i] * 3;
+                const key = pos[origIndex].toFixed(6) + ',' + pos[origIndex + 1].toFixed(6) + ',' + pos[origIndex + 2].toFixed(6);
+                renderIndices.push(posToId.get(key));
+            }
+            renderGeometry.setIndex(renderIndices);
+            renderGeometry.computeVertexNormals();
+            const renderMaterial = new THREE.MeshStandardMaterial({ color: Math.random() * 0xffffff, side: THREE.DoubleSide });
+            const renderMesh = new THREE.Mesh(renderGeometry, renderMaterial);
+            renderMesh.position.set(x, y, z);
+            renderMesh.castShadow = true;
+            renderMesh.receiveShadow = true;
+            renderMesh.userData = { squishy: { particles, renderMesh, geometry: renderGeometry } };
+            scene.add(renderMesh);
+            squishies.push({ particles, renderMesh, geometry: renderGeometry });
+        }
+        let tesseracts = [];
+        function createTesseract(size) {
+            const halfSize = size / 2;
+            const vertices4D = [];
+            for (let i = 0; i < 16; i++) {
+                vertices4D.push(new THREE.Vector4(
+                    ((i & 8) ? halfSize : -halfSize),
+                    ((i & 4) ? halfSize : -halfSize),
+                    ((i & 2) ? halfSize : -halfSize),
+                    ((i & 1) ? halfSize : -halfSize)
+                ));
+            }
+            const edges = [];
+            for (let i = 0; i < 16; i++) {
+                for (let j = i + 1; j < 16; j++) {
+                    let diffCount = 0;
+                    if ((i ^ j) & 1) diffCount++;
+                    if ((i ^ j) & 2) diffCount++;
+                    if ((i ^ j) & 4) diffCount++;
+                    if ((i ^ j) & 8) diffCount++;
+                    if (diffCount === 1) {
+                        edges.push([i, j]);
+                    }
+                }
+            }
+            const positions = new Float32Array(edges.length * 2 * 3);
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            const lineMaterial = new THREE.LineBasicMaterial({ 
+                color: Math.random() * 0xffffff,
+                linewidth: 2
+            });
+            const mesh = new THREE.LineSegments(geometry, lineMaterial);
+            const body = new CANNON.Body({ mass: 1 });
+            body.addShape(new CANNON.Box(new CANNON.Vec3(halfSize * 2, halfSize * 2, halfSize * 2)));
+            return { 
+                body, 
+                mesh, 
+                vertices4D, 
+                edges, 
+                geometry,
+                angleXW: 0, 
+                angleYW: 0, 
+                angleZW: 0 
+            };
+        }
+        function updateTesseract(tess) {
+            tess.angleXW += 0.01;
+            tess.angleYW += 0.008;
+            tess.angleZW += 0.012;
+            const cosXW = Math.cos(tess.angleXW);
+            const sinXW = Math.sin(tess.angleXW);
+            const cosYW = Math.cos(tess.angleYW);
+            const sinYW = Math.sin(tess.angleYW);
+            const cosZW = Math.cos(tess.angleZW);
+            const sinZW = Math.sin(tess.angleZW);
+            for (let v of tess.vertices4D) {
+                let x = v.x * cosXW - v.w * sinXW;
+                let w = v.x * sinXW + v.w * cosXW;
+                v.x = x;
+                v.w = w;
+                let y = v.y * cosYW - v.w * sinYW;
+                w = v.y * sinYW + v.w * cosYW;
+                v.y = y;
+                v.w = w;
+                let z = v.z * cosZW - v.w * sinZW;
+                w = v.z * sinZW + v.w * cosZW;
+                v.z = z;
+                v.w = w;
+            }
+            const positions = tess.geometry.attributes.position.array;
+            let idx = 0;
+            const projectionDistance = 3;
+            for (let edge of tess.edges) {
+                const v1 = tess.vertices4D[edge[0]];
+                const scale1 = projectionDistance / (projectionDistance - v1.w);
+                positions[idx++] = v1.x * scale1;
+                positions[idx++] = v1.y * scale1;
+                positions[idx++] = v1.z * scale1;
+                const v2 = tess.vertices4D[edge[1]];
+                const scale2 = projectionDistance / (projectionDistance - v2.w);
+                positions[idx++] = v2.x * scale2;
+                positions[idx++] = v2.y * scale2;
+                positions[idx++] = v2.z * scale2;
+            }
+            tess.geometry.attributes.position.needsUpdate = true;
+        }
+        const fixedTimeStep = 1 / 60;
+        const maxSubSteps = 3;
+        let lastTime = 0;
+        function animate(time) {
+            requestAnimationFrame(animate);
+            const deltaTime = (time - lastTime) / 1000;
+            world.step(fixedTimeStep, deltaTime, maxSubSteps);
+            lastTime = time;
+            for (let i = 0; i < meshes.length; i++) {
+                meshes[i].position.copy(bodies[i].position);
+                meshes[i].quaternion.copy(bodies[i].quaternion);
+            }
+            squishies.forEach(s => {
+                const positions = s.geometry.attributes.position.array;
+                let center = new THREE.Vector3();
+                for (let v = 0; v < s.particles.length; v++) {
+                    const p = s.particles[v].position;
+                    center.add(p);
+                }
+                center.divideScalar(s.particles.length);
+                s.renderMesh.position.copy(center);
+                for (let v = 0; v < s.particles.length; v++) {
+                    const p = s.particles[v].position;
+                    positions[v * 3] = p.x - center.x;
+                    positions[v * 3 + 1] = p.y - center.y;
+                    positions[v * 3 + 2] = p.z - center.z;
+                }
+                s.geometry.attributes.position.needsUpdate = true;
+                s.geometry.computeVertexNormals();
+            });
+            tesseracts.forEach(tess => {
+                tess.mesh.position.copy(tess.body.position);
+                tess.mesh.quaternion.copy(tess.body.quaternion);
+                updateTesseract(tess);
+            });
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>

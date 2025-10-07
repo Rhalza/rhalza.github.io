@@ -1,0 +1,1423 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Agar.io</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<style>
+    body { margin: 0; overflow: hidden; background-color: #f2fbff; font-family: sans-serif; }
+    canvas { display: block; background-color: #e8f7ff; touch-action: none; /* Prevent default touch actions like scroll/zoom */ }
+
+    /* UI Elements */
+    #uiContainer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; /* Allow clicks/touches to pass through */}
+    #scoreBoard {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        color: #333;
+        font-size: 16px;
+        background-color: rgba(255, 255, 255, 0.7);
+        padding: 5px 10px;
+        border-radius: 5px;
+        pointer-events: all;
+    }
+     #leaderboard {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        color: #333;
+        background-color: rgba(255, 255, 255, 0.7);
+        padding: 5px 10px;
+        border-radius: 5px;
+        min-width: 150px;
+        pointer-events: all;
+    }
+    #leaderboard h3 { margin: 0 0 5px 0; font-size: 14px; text-align: center; }
+    #leaderboard ol { list-style: none; margin: 0; padding: 0; font-size: 12px; }
+    #leaderboard li { margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+
+    /* Start Screen */
+    #startScreen {
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background-color: rgba(0, 0, 0, 0.8); color: white;
+        display: flex; flex-direction: column;
+        justify-content: center; align-items: center;
+        z-index: 20;
+    }
+     #startScreen h1 { font-size: 48px; margin-bottom: 30px; }
+     #nicknameInput {
+        padding: 10px 15px; font-size: 18px; margin-bottom: 20px;
+        border: none; border-radius: 5px; text-align: center; min-width: 200px;
+     }
+     #startButton {
+        padding: 15px 40px; font-size: 20px; cursor: pointer;
+        background-color: #4CAF50; color: white;
+        border: none; border-radius: 5px;
+        transition: background-color 0.3s ease;
+     }
+     #startButton:hover { background-color: #45a049; }
+
+
+    /* Game Over Screen */
+    #gameOverScreen {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        background-color: rgba(0, 0, 0, 0.7); color: white;
+        display: none; flex-direction: column;
+        justify-content: center; align-items: center;
+        text-align: center; z-index: 10;
+    }
+    #gameOverScreen h1 { font-size: 48px; margin-bottom: 20px; }
+    #gameOverScreen p { font-size: 24px; margin-bottom: 30px; }
+    #restartButton {
+        padding: 15px 30px; font-size: 20px; cursor: pointer;
+        background-color: #4CAF50; color: white;
+        border: none; border-radius: 5px; pointer-events: all;
+        transition: background-color 0.3s ease;
+    }
+    #restartButton:hover { background-color: #45a049; }
+
+    /* Mobile Controls */
+    .mobile-controls { display: none; pointer-events: all; } /* Hidden by default */
+    #joystickArea {
+        position: absolute;
+        bottom: 20px; left: 20px;
+        width: 150px; height: 150px;
+        /* background-color: rgba(128, 128, 128, 0.2); */ /* Optional visual aid */
+        border-radius: 50%;
+    }
+    #joystickBase {
+        position: absolute;
+        bottom: 35px; left: 35px; /* Centered within joystickArea */
+        width: 120px; height: 120px;
+        background-color: rgba(0, 0, 0, 0.3);
+        border-radius: 50%;
+        display: flex; justify-content: center; align-items: center;
+    }
+    #joystickKnob {
+        width: 60px; height: 60px;
+        background-color: rgba(0, 0, 0, 0.5);
+        border-radius: 50%;
+        position: absolute; /* We'll move this with JS */
+        /* Centered initially */
+        top: 50%; left: 50%; transform: translate(-50%, -50%);
+    }
+    #actionButtons {
+        position: absolute;
+        bottom: 40px; right: 20px;
+        display: flex; flex-direction: column;
+        gap: 20px;
+    }
+    .actionButton {
+        width: 70px; height: 70px;
+        background-color: rgba(255, 82, 82, 0.7); /* Red-ish for actions */
+        border: 2px solid rgba(255,255,255,0.5);
+        border-radius: 50%;
+        display: flex; justify-content: center; align-items: center;
+        font-size: 12px; color: white; font-weight: bold; text-align: center;
+        cursor: pointer;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    }
+    #splitButton { background-color: rgba(82, 150, 255, 0.7); } /* Blue-ish for split */
+
+</style>
+</head>
+<body>
+
+<div id="startScreen">
+    <h1>Agar.io</h1>
+    <input type="text" id="nicknameInput" placeholder="Enter Nickname" maxlength="15">
+    <button id="startButton">Play</button>
+</div>
+
+<canvas id="gameCanvas"></canvas>
+
+<div id="uiContainer">
+    <div id="scoreBoard">Mass: 0</div>
+    <div id="leaderboard">
+        <h3>Leaderboard</h3>
+        <ol id="leaderboardList"></ol>
+    </div>
+
+    <div id="gameOverScreen">
+        <h1>Game Over!</h1>
+        <p id="finalScore"></p>
+        <button id="restartButton">Restart</button>
+    </div>
+
+    <!-- Mobile Controls -->
+    <div id="mobileControls" class="mobile-controls">
+        <div id="joystickArea">
+             <div id="joystickBase">
+                 <div id="joystickKnob"></div>
+             </div>
+        </div>
+        <div id="actionButtons">
+            <div id="splitButton" class="actionButton">SPLIT</div>
+            <div id="ejectButton" class="actionButton">EJECT</div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const context = canvas.getContext('2d');
+    const scoreBoard = document.getElementById('scoreBoard');
+    const leaderboardList = document.getElementById('leaderboardList');
+    const gameOverScreen = document.getElementById('gameOverScreen');
+    const finalScoreElement = document.getElementById('finalScore');
+    const restartButton = document.getElementById('restartButton');
+    const startScreen = document.getElementById('startScreen');
+    const nicknameInput = document.getElementById('nicknameInput');
+    const startButton = document.getElementById('startButton');
+
+    // Mobile Controls Elements
+    const mobileControls = document.getElementById('mobileControls');
+    const joystickArea = document.getElementById('joystickArea');
+    const joystickKnob = document.getElementById('joystickKnob');
+    const splitButton = document.getElementById('splitButton');
+    const ejectButton = document.getElementById('ejectButton');
+
+
+    let animationFrameId;
+    let gameRunning = false; // Start paused until nickname entered
+    let playerNickname = "Player";
+    let isMobile = false;
+    let leaderboardUpdateCounter = 0;
+
+    // --- Device Detection ---
+    function detectDevice() {
+        const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+        // Basic check for mobile keywords
+        if (/android|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase())) {
+            isMobile = true;
+        }
+        // More reliable check for touch capability
+        if (('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0)) {
+            isMobile = true;
+        }
+
+        console.log("Is Mobile:", isMobile);
+        if (isMobile) {
+            mobileControls.style.display = 'block';
+        } else {
+            mobileControls.style.display = 'none';
+        }
+    }
+
+
+    // Game Settings
+    const WORLD_WIDTH = 5000; // Larger world
+    const WORLD_HEIGHT = 5000;
+    const GRID_SIZE = 50;
+    const INITIAL_PLAYER_MASS = 10;
+    const FOOD_MASS = 1;
+    const MAX_FOOD_COUNT = 250; // More food for larger world
+    const ENEMY_COUNT = 15;     // More enemies
+    const VIRUS_COUNT = 10;     // Number of viruses
+    const VIRUS_MASS = 100;     // Mass of a virus
+    const VIRUS_SPLIT_MASS_MIN = 130; // Min mass to be split by a virus
+    const SPLIT_MAX_CELLS = 16; // Max cells a player can have
+    const SPLIT_MASS_THRESHOLD = 35; // Min mass to split manually
+    const EJECT_MASS_AMOUNT = 12;   // Mass lost when ejecting
+    const EJECTED_MASS_DECAY_RATE = 0.995; // Ejected mass shrinks
+    const EJECT_MASS_THRESHOLD = 30; // Min mass to eject
+    const MERGE_TIME = 15 * 60; // Frames before cells can merge (~15 secs at 60fps)
+    const MASS_CONSUME_RATIO = 1.1; // Must be this much bigger to eat another cell
+    const PLAYER_MASS_DECAY_RATE = 0.99998; // Slow mass decay per frame
+    const ZOOM_FACTOR = 0.9;
+    const PC_SLOW_MOVE_THRESHOLD = 150; // World units distance from center for slowdown
+    const PC_MIN_SPEED_FACTOR = 0.1; // Minimum speed when cursor is very close
+
+    let player;
+    let foods = [];
+    let enemies = [];
+    let ejectedMasses = [];
+    let viruses = [];
+    let mouse = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+    let camera = { x: 0, y: 0, zoom: 1 };
+    let worldMouse = { x: 0, y: 0 }; // Mouse position in world coordinates
+
+    // Mobile Joystick State
+    let touchId = null;
+    let joystickActive = false;
+    let joystickStartX = 0;
+    let joystickStartY = 0;
+    let joystickDeltaX = 0;
+    let joystickDeltaY = 0;
+    const joystickRadius = 60; // The visual base radius / 2
+
+    // --- Utility Functions ---
+    function getRandomColor() { /* ... (same as before) ... */
+        const letters = '0123456789ABCDEF'; let color = '#';
+        for (let i = 0; i < 6; i++) { color += letters[Math.floor(Math.random() * 16)]; } return color;
+    }
+    function getRandomPosition(radius) { /* ... (same as before) ... */
+        return { x: Math.random()*(WORLD_WIDTH - radius*2)+radius, y: Math.random()*(WORLD_HEIGHT - radius*2)+radius };
+    }
+    function distance(obj1, obj2) { /* ... (same as before) ... */
+        const dx = obj1.x - obj2.x; const dy = obj1.y - obj2.y; return Math.sqrt(dx * dx + dy * dy);
+    }
+    function lerp(start, end, amount) { /* ... (same as before) ... */
+        return start + (end - start) * amount;
+    }
+    function calculateRadius(mass) { /* ... (same as before) ... */
+        return Math.sqrt(mass / Math.PI) * 4;
+    }
+    // Clamp number between min and max
+    function clamp(value, min, max) {
+        return Math.max(min, Math.min(value, max));
+    }
+
+    // --- Base Cell Class ---
+    class Cell {
+        constructor(x, y, mass, color) {
+            this.x = x; this.y = y;
+            this.mass = mass;
+            this.radius = calculateRadius(mass);
+            this.color = color || getRandomColor();
+            this.outlineColor = this.darkenColor(this.color, 0.8);
+            this.speed = 6; // Slightly faster base speed
+            this.vx = 0; this.vy = 0;
+            this.canMerge = true; // Default state
+            this.mergeTimer = 0;  // Cooldown after splitting/merging
+
+            // Jelly Effect properties
+            this.numPoints = 32; // More points for smoother wobble
+            this.wobbleIntensity = 0;
+            this.wobbleDecay = 0.95;
+            this.maxWobble = 0.15; // Max wobble factor relative to radius
+        }
+
+        draw(ctx) {
+             // Jelly effect calculation
+            this.wobbleIntensity *= this.wobbleDecay; // Decay wobble over time
+            const currentWobble = this.radius * this.wobbleIntensity * Math.min(1, Math.sqrt(this.vx*this.vx + this.vy*this.vy) / 5); // Wobble more at higher speed
+
+            ctx.fillStyle = this.color;
+            ctx.strokeStyle = this.outlineColor;
+            ctx.lineWidth = Math.max(1, this.radius * 0.05);
+
+            ctx.beginPath();
+            const angleStep = (Math.PI * 2) / this.numPoints;
+            for (let i = 0; i <= this.numPoints; i++) {
+                const angle = i * angleStep;
+                 // Base position on circle
+                const baseX = this.x + Math.cos(angle) * this.radius;
+                const baseY = this.y + Math.sin(angle) * this.radius;
+
+                // Calculate wobble offset (perpendicular to the radius vector)
+                // Use time and angle to make it dynamic
+                const wobbleOffset = currentWobble * Math.sin(Date.now() * 0.005 + angle * 3); // Adjust multipliers for speed/complexity
+                const wobbleX = -Math.sin(angle) * wobbleOffset;
+                const wobbleY = Math.cos(angle) * wobbleOffset;
+
+                const px = baseX + wobbleX;
+                const py = baseY + wobbleY;
+
+                if (i === 0) {
+                    ctx.moveTo(px, py);
+                } else {
+                    ctx.lineTo(px, py);
+                }
+            }
+            ctx.closePath(); // Close the shape
+
+            ctx.fill();
+            ctx.stroke();
+
+
+            // --- Old drawing code (perfect circle) ---
+            /*
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fillStyle = this.color;
+            ctx.fill();
+            ctx.strokeStyle = this.outlineColor;
+            ctx.lineWidth = Math.max(1, this.radius * 0.05);
+            ctx.stroke();
+            ctx.closePath();
+            */
+        }
+
+        darkenColor(color, factor) { /* ... (same as before) ... */
+            try {
+                let r = parseInt(color.substr(1, 2), 16); let g = parseInt(color.substr(3, 2), 16); let b = parseInt(color.substr(5, 2), 16);
+                r = Math.floor(r * factor); g = Math.floor(g * factor); b = Math.floor(b * factor);
+                return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+            } catch (e) { return "#888888"; /* Fallback */ }
+        }
+
+        updateMass(newMass) {
+            if (newMass < 1) newMass = 1; // Prevent zero/negative mass
+            if (newMass !== this.mass) {
+                 // Add a little wobble when mass changes
+                 this.wobbleIntensity = Math.min(this.maxWobble, this.wobbleIntensity + Math.abs(newMass - this.mass) * 0.001);
+            }
+            this.mass = newMass;
+            this.radius = calculateRadius(this.mass);
+        }
+
+        getSpeed(distanceToTarget = Infinity) {
+            // Base speed decreases with mass
+            let baseSpeed = Math.max(0.5, this.speed * Math.pow(this.mass, -0.43)); // Adjusted exponent slightly
+
+            // PC Only: Slow down if mouse is close
+            if (!isMobile && distanceToTarget < PC_SLOW_MOVE_THRESHOLD) {
+                const speedFactor = lerp(PC_MIN_SPEED_FACTOR, 1.0, distanceToTarget / PC_SLOW_MOVE_THRESHOLD);
+                baseSpeed *= speedFactor;
+            }
+
+            return baseSpeed;
+        }
+
+        moveTowards(targetX, targetY) {
+            const dx = targetX - this.x;
+            const dy = targetY - this.y;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+
+            if (dist < 1) return; // Don't move if already at target
+
+            const angle = Math.atan2(dy, dx);
+            const currentSpeed = this.getSpeed(dist);
+
+            this.vx = Math.cos(angle) * currentSpeed;
+            this.vy = Math.sin(angle) * currentSpeed;
+        }
+
+        applyMovement() {
+            // Apply friction/damping
+            this.vx *= 0.95; // Increased damping slightly
+            this.vy *= 0.95;
+
+            // Add wobble based on velocity change (acceleration) - approximation
+            const speedChange = Math.sqrt(this.vx*this.vx + this.vy*this.vy) - Math.sqrt( (this.vx*0.95)*(this.vx*0.95) + (this.vy*0.95)*(this.vy*0.95));
+            this.wobbleIntensity = Math.min(this.maxWobble, this.wobbleIntensity + Math.abs(speedChange) * 0.02);
+
+
+            this.x += this.vx;
+            this.y += this.vy;
+
+            // World boundary collision
+            this.x = clamp(this.x, this.radius, WORLD_WIDTH - this.radius);
+            this.y = clamp(this.y, this.radius, WORLD_HEIGHT - this.radius);
+        }
+
+        canEat(other) { /* ... (same as before) ... */
+             const dist = distance(this, other);
+             return this.mass > other.mass * MASS_CONSUME_RATIO && dist < this.radius - other.radius * 0.5; // More overlap needed
+        }
+    }
+
+    // --- Virus Class ---
+    class Virus extends Cell {
+        constructor(x, y) {
+            super(x, y, VIRUS_MASS, '#33ff33'); // Green color
+            this.numPoints = 12; // Fewer points for spiky look
+            this.maxWobble = 0.3; // Viruses are more 'wobbly'/spiky visually
+            this.wobbleIntensity = this.maxWobble * 0.5; // Start slightly wobbly
+        }
+
+        draw(ctx) {
+            // Override draw for spiky appearance
+             const currentWobble = this.radius * this.maxWobble; // Fixed wobble for spikes
+
+             ctx.fillStyle = this.color;
+             ctx.strokeStyle = this.darkenColor(this.color, 0.7);
+             ctx.lineWidth = Math.max(2, this.radius * 0.08);
+
+             ctx.beginPath();
+             const angleStep = (Math.PI * 2) / this.numPoints;
+             for (let i = 0; i <= this.numPoints; i++) {
+                 const angle = i * angleStep;
+                 const r = this.radius + (i % 2 === 0 ? currentWobble : -currentWobble * 0.5); // Alternating spike length
+
+                 const px = this.x + Math.cos(angle) * r;
+                 const py = this.y + Math.sin(angle) * r;
+
+                 if (i === 0) { ctx.moveTo(px, py); } else { ctx.lineTo(px, py); }
+             }
+             ctx.closePath();
+             ctx.fill();
+             ctx.stroke();
+        }
+
+        // Viruses don't move on their own or eat in the standard way
+        applyMovement() {}
+        moveTowards() {}
+        getSpeed() { return 0; }
+        updateMass(m) { /* Mass is fixed unless hit */ this.mass = m; this.radius = calculateRadius(m); }
+    }
+
+
+    // --- Player Class ---
+    class Player {
+        constructor(nickname = "Player") {
+            const startMass = INITIAL_PLAYER_MASS;
+            const startPos = getRandomPosition(calculateRadius(startMass));
+            this.cells = [new Cell(startPos.x, startPos.y, startMass, '#3498db')];
+            this.nickname = nickname;
+        }
+
+        get totalMass() { /* ... (same as before) ... */ return this.cells.reduce((sum, cell) => sum + cell.mass, 0); }
+        get center() { /* ... (same as before) ... */
+            let totalX = 0, totalY = 0, totalMass = 0;
+            this.cells.forEach(cell => { totalX += cell.x * cell.mass; totalY += cell.y * cell.mass; totalMass += cell.mass; });
+            return totalMass === 0 ? { x: 0, y: 0 } : { x: totalX / totalMass, y: totalY / totalMass };
+        }
+        getBoundingBox() { /* ... (same as before) ... */
+             if (this.cells.length === 0) return { minX: 0, minY: 0, maxX: 0, maxY: 0, width: 0, height: 0 };
+             let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+             this.cells.forEach(cell => { minX = Math.min(minX, cell.x-cell.radius); minY = Math.min(minY, cell.y-cell.radius); maxX = Math.max(maxX, cell.x+cell.radius); maxY = Math.max(maxY, cell.y+cell.radius); });
+             return { minX, minY, maxX, maxY, width: maxX - minX, height: maxY - minY };
+        }
+
+        update(targetX, targetY) {
+            this.moveCells(targetX, targetY);
+            this.checkCellMerges();
+            this.updateMergeTimers();
+            this.applyMassDecay();
+            this.repelCells(); // Keep repelling after movement and merging
+        }
+
+        moveCells(targetX, targetY) {
+            this.cells.forEach(cell => {
+                cell.moveTowards(targetX, targetY);
+                cell.applyMovement();
+            });
+        }
+
+        repelCells() { /* ... (same as before, maybe slightly adjust REPEL_FORCE if needed) ... */
+             const REPEL_FORCE = 0.6; // Slightly increased force
+             for (let i = 0; i < this.cells.length; i++) {
+                 for (let j = i + 1; j < this.cells.length; j++) {
+                     const cellA = this.cells[i]; const cellB = this.cells[j];
+                     const dist = distance(cellA, cellB);
+                     const overlap = cellA.radius + cellB.radius - dist;
+                     if (overlap > 0 && dist > 0.1) {
+                         const angle = Math.atan2(cellB.y - cellA.y, cellB.x - cellA.x);
+                         const force = overlap * REPEL_FORCE * 0.5; // Apply half force to each
+                         const massRatioA = cellB.mass / (cellA.mass + cellB.mass);
+                         const massRatioB = cellA.mass / (cellA.mass + cellB.mass);
+
+                         cellA.vx -= Math.cos(angle) * force * massRatioA;
+                         cellA.vy -= Math.sin(angle) * force * massRatioA;
+                         cellB.vx += Math.cos(angle) * force * massRatioB;
+                         cellB.vy += Math.sin(angle) * force * massRatioB;
+
+                          // Direct position adjustment to prevent sticking (use cautiously)
+                         cellA.x -= Math.cos(angle) * overlap * 0.2 * massRatioA;
+                         cellA.y -= Math.sin(angle) * overlap * 0.2 * massRatioA;
+                         cellB.x += Math.cos(angle) * overlap * 0.2 * massRatioB;
+                         cellB.y += Math.sin(angle) * overlap * 0.2 * massRatioB;
+
+                         // Ensure bounds after repulsion adjustment
+                         cellA.x = clamp(cellA.x, cellA.radius, WORLD_WIDTH - cellA.radius); cellA.y = clamp(cellA.y, cellA.radius, WORLD_HEIGHT - cellA.radius);
+                         cellB.x = clamp(cellB.x, cellB.radius, WORLD_WIDTH - cellB.radius); cellB.y = clamp(cellB.y, cellB.radius, WORLD_HEIGHT - cellB.radius);
+                     }
+                 }
+             }
+        }
+
+        split(targetX, targetY) {
+            let newCells = [];
+            let cellsToProcess = [...this.cells]; // Process a copy to avoid issues while iterating and adding
+
+            cellsToProcess.forEach(cell => {
+                if (this.cells.length + newCells.length >= SPLIT_MAX_CELLS) return; // Enforce max cell limit
+
+                if (cell.mass >= SPLIT_MASS_THRESHOLD) {
+                    const splitMass = cell.mass / 2;
+                    cell.updateMass(splitMass);
+
+                    const angle = Math.atan2(targetY - cell.y, targetX - cell.x);
+                    const splitDistance = cell.radius * 1.5; // Start slightly further
+                    const newX = cell.x + Math.cos(angle) * splitDistance;
+                    const newY = cell.y + Math.sin(angle) * splitDistance;
+
+                    const newCell = new Cell(clamp(newX,0,WORLD_WIDTH), clamp(newY,0,WORLD_HEIGHT), splitMass, cell.color);
+
+                    // Propel the new cell more strongly
+                    const boostSpeed = Math.min(60, 20 + cell.radius * 0.5); // Boost based on size, capped
+                    newCell.vx = cell.vx + Math.cos(angle) * boostSpeed;
+                    newCell.vy = cell.vy + Math.sin(angle) * boostSpeed;
+                    // Slight recoil for original cell
+                    cell.vx -= Math.cos(angle) * boostSpeed * 0.1;
+                    cell.vy -= Math.sin(angle) * boostSpeed * 0.1;
+
+                    // Add wobble effect
+                    cell.wobbleIntensity = cell.maxWobble;
+                    newCell.wobbleIntensity = newCell.maxWobble;
+
+                    newCell.canMerge = false;
+                    cell.canMerge = false;
+                    newCell.mergeTimer = MERGE_TIME + Math.sqrt(splitMass)*2; // Slightly longer merge time based on mass
+                    cell.mergeTimer = newCell.mergeTimer;
+
+                    newCells.push(newCell);
+                }
+            });
+            this.cells.push(...newCells);
+        }
+
+        ejectMass(targetX, targetY) {
+            let newEjectedMasses = [];
+            this.cells.forEach(cell => {
+                if (cell.mass >= EJECT_MASS_THRESHOLD) {
+                    const ejectedMass = EJECT_MASS_AMOUNT;
+                    if (cell.mass - ejectedMass < INITIAL_PLAYER_MASS/2) return; // Don't eject if it makes cell too small
+                    cell.updateMass(cell.mass - ejectedMass);
+
+                    const angle = Math.atan2(targetY - cell.y, targetX - cell.x);
+                    const ejectDistance = cell.radius + calculateRadius(ejectedMass) + 5;
+                    const ejectX = cell.x + Math.cos(angle) * ejectDistance;
+                    const ejectY = cell.y + Math.sin(angle) * ejectDistance;
+
+                    const newEject = new Cell(ejectX, ejectY, ejectedMass, cell.color);
+                    newEject.massDecayRate = EJECTED_MASS_DECAY_RATE; // Assign specific decay rate
+
+                    // Propel the ejected mass
+                    const boostSpeed = 35;
+                    newEject.vx = cell.vx + Math.cos(angle) * boostSpeed;
+                    newEject.vy = cell.vy + Math.sin(angle) * boostSpeed;
+
+                    // Add slight wobble
+                    newEject.wobbleIntensity = newEject.maxWobble * 0.5;
+                    cell.wobbleIntensity = Math.min(cell.maxWobble, cell.wobbleIntensity + 0.05);
+
+
+                    newEjectedMasses.push(newEject);
+                }
+            });
+            return newEjectedMasses;
+        }
+
+        updateMergeTimers() { /* ... (same as before) ... */
+             this.cells.forEach(cell => {
+                 if (cell.mergeTimer > 0) { cell.mergeTimer--; }
+                 else { cell.canMerge = true; }
+             });
+        }
+
+        checkCellMerges() { /* ... (same as before, maybe tweak threshold) ... */
+            for (let i = this.cells.length - 1; i >= 0; i--) {
+                for (let j = i - 1; j >= 0; j--) {
+                    const cellA = this.cells[i];
+                    const cellB = this.cells[j];
+
+                    if (!cellA.canMerge || !cellB.canMerge) continue;
+
+                    const dist = distance(cellA, cellB);
+                    // Need significant overlap, based on the smaller cell's radius, to merge
+                    const mergeOverlapThreshold = Math.min(cellA.radius, cellB.radius) * 0.5;
+
+                    if (dist < cellA.radius + cellB.radius - mergeOverlapThreshold) {
+                        // Merge smaller into larger
+                        const bigger = cellA.mass > cellB.mass ? cellA : cellB;
+                        const smaller = cellA.mass > cellB.mass ? cellB : cellA;
+                        const absorbingIndex = cellA.mass > cellB.mass ? i : j;
+                        const removingIndex = cellA.mass > cellB.mass ? j : i;
+
+                        // Weighted position average (optional, can be jerky)
+                        // bigger.x = (bigger.x * bigger.mass + smaller.x * smaller.mass) / (bigger.mass + smaller.mass);
+                        // bigger.y = (bigger.y * bigger.mass + smaller.y * smaller.mass) / (bigger.mass + smaller.mass);
+
+                        bigger.updateMass(bigger.mass + smaller.mass);
+                        bigger.canMerge = false;
+                        bigger.mergeTimer = MERGE_TIME / 3; // Shorter cooldown after successful merge
+
+                        bigger.wobbleIntensity = bigger.maxWobble; // Wobble on merge
+
+                        this.cells.splice(removingIndex, 1);
+                        i--; // Adjust outer loop index since we removed an element before it
+                        break; // Restart check for the merged cell 'bigger'
+                    }
+                }
+            }
+        }
+
+        applyMassDecay() {
+            this.cells.forEach(cell => {
+                // Decay more relative mass if the cell is larger
+                // loss = baseRate * mass ^ factor (factor slightly > 0, like 0.05)
+                // Simpler: Apply rate, but ensure minimum mass isn't breached quickly
+                const decayFactor = 1.0 - ( (cell.mass / 1000) * 0.00002 ); // Example: decays faster % as mass increases
+                const newMass = cell.mass * Math.max(0.9999, decayFactor) * PLAYER_MASS_DECAY_RATE;
+
+                // Only decay if above a certain base mass to prevent small cells vanishing
+                if (cell.mass > INITIAL_PLAYER_MASS * 1.5) {
+                    cell.updateMass(newMass);
+                }
+            });
+        }
+
+        draw(ctx) { /* ... (draw nickname logic same as before, cell drawing handled by Cell class) ... */
+             const sortedCells = [...this.cells].sort((a, b) => a.radius - b.radius);
+             sortedCells.forEach(cell => cell.draw(ctx));
+
+             if (this.cells.length > 0) {
+                  const center = this.center;
+                  const avgRadius = this.cells.reduce((sum, cell) => sum + cell.radius, 0) / this.cells.length;
+                  ctx.fillStyle = "#FFF"; ctx.shadowColor = "#000"; ctx.shadowBlur = 4; // Add shadow for readability
+                  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+                  ctx.font = `bold ${Math.max(10, Math.floor(avgRadius / 2.5))}px sans-serif`;
+                  ctx.fillText(this.nickname, center.x, center.y);
+                  ctx.shadowBlur = 0; // Reset shadow
+             }
+        }
+    }
+
+    // --- Enemy AI Class ---
+    class Enemy extends Player {
+        constructor(massMultiplier = 1) {
+            const nickname = `Bot_${Math.random().toString(36).substring(2, 7)}`;
+            super(nickname); // Call Player constructor
+            const startMass = INITIAL_PLAYER_MASS * massMultiplier * (0.5 + Math.random() * 1.5);
+            const startPos = getRandomPosition(calculateRadius(startMass));
+            this.cells = [new Cell(startPos.x, startPos.y, startMass, getRandomColor())];
+            this.decisionTimer = Math.random() * 60;
+            this.target = null; this.threat = null; this.action = 'wander';
+            this.wanderTarget = getRandomPosition(10);
+            this.targetCellToEat = null; // Specific cell it's trying to eat
+        }
+
+        updateAI(allFoods, allPlayers, allViruses) {
+            this.decisionTimer--;
+            if (this.decisionTimer <= 0) {
+                this.makeDecision(allFoods, allPlayers, allViruses);
+                this.decisionTimer = Math.random() * 45 + 20; // Decide slightly faster
+            }
+
+             // Execute action
+            let targetX = this.center.x;
+            let targetY = this.center.y;
+
+            if (this.action === 'flee' && this.threat) {
+                const angle = Math.atan2(this.center.y - this.threat.y, this.center.x - this.threat.x);
+                targetX = this.center.x + Math.cos(angle) * 1000; // Flee
+                targetY = this.center.y + Math.sin(angle) * 1000;
+            } else if (this.action === 'chase' && this.target) {
+                targetX = this.target.x; targetY = this.target.y;
+                // Advanced: Consider splitting if target is small and far, and AI is large enough
+                // if (this.shouldSplitToChase()) { this.split(targetX, targetY); }
+            } else if (this.action === 'eat_virus' && this.target) {
+                 targetX = this.target.x; targetY = this.target.y;
+                 // Eject mass towards the virus
+                 if (this.decisionTimer % 10 === 0 && this.totalMass > VIRUS_MASS * 1.5) { // Eject periodically
+                      const newEjected = this.ejectMass(targetX, targetY);
+                      ejectedMasses.push(...newEjected);
+                 }
+            } else { // Wander
+                 if (distance(this.center, this.wanderTarget) < 100 || this.action !== 'wander') {
+                     this.wanderTarget = {
+                        x: clamp(this.center.x + (Math.random() - 0.5) * 1000, 0, WORLD_WIDTH),
+                        y: clamp(this.center.y + (Math.random() - 0.5) * 1000, 0, WORLD_HEIGHT)
+                    };
+                 }
+                 targetX = this.wanderTarget.x; targetY = this.wanderTarget.y;
+                 this.action = 'wander'; // Ensure action is wander if no target/threat
+            }
+
+            this.update(targetX, targetY); // Use the parent Player update method
+        }
+
+        makeDecision(allFoods, allPlayers, allViruses) {
+            this.target = null; this.threat = null; this.targetCellToEat = null;
+            let bestTargetScore = -Infinity;
+            let nearestThreatDist = Infinity;
+            let closestVirusDist = Infinity;
+            let virusToEat = null;
+
+            // Simplified visibility range - based on average radius
+             const avgRadius = this.cells.reduce((sum, cell) => sum + cell.radius, 0) / this.cells.length;
+             const visibilityRange = avgRadius * 15 + 300; // See further if bigger + base range
+
+             const currentCenter = this.center; // Cache center calculation
+
+            // 1. Find Threats
+             allPlayers.forEach(otherPlayer => {
+                if (otherPlayer === this) return;
+                otherPlayer.cells.forEach(otherCell => {
+                    // Threat if they can eat ANY of my cells
+                    this.cells.forEach(myCell => {
+                        if (otherCell.mass > myCell.mass * MASS_CONSUME_RATIO) {
+                            const dist = distance(currentCenter, otherCell);
+                            if (dist < visibilityRange && dist < nearestThreatDist) {
+                                nearestThreatDist = dist;
+                                this.threat = otherCell;
+                            }
+                        }
+                    });
+                 });
+             });
+
+             // 2. Find Viruses (as threats or potential food)
+            allViruses.forEach(virus => {
+                const dist = distance(currentCenter, virus);
+                 // Threat if I'm big enough to be split by it
+                 if (this.totalMass > VIRUS_SPLIT_MASS_MIN && dist < virus.radius + avgRadius + 50) {
+                      if (dist < nearestThreatDist) {
+                           nearestThreatDist = dist;
+                           this.threat = virus; // Treat virus as immediate threat if close and vulnerable
+                      }
+                 }
+                  // Potential food source if AI is large
+                 if (this.totalMass > VIRUS_MASS * 2 && dist < visibilityRange * 0.8) {
+                     if (dist < closestVirusDist) {
+                         closestVirusDist = dist;
+                         virusToEat = virus;
+                     }
+                 }
+            });
+
+
+            // 3. Decide Action based on Threats
+            if (this.threat && nearestThreatDist < visibilityRange * 0.5) { // Flee if threat is close
+                this.action = 'flee';
+                return;
+            }
+
+             // 4. Consider eating a virus if safe and beneficial
+             if (virusToEat && !this.threat && this.cells.length < SPLIT_MAX_CELLS / 2) { // Don't feed virus if already many cells
+                 this.action = 'eat_virus';
+                 this.target = virusToEat;
+                 return;
+             }
+
+            // 5. Find Best Food/Target (Pellets, Ejected Mass, Smaller Cells)
+            const potentialTargets = [...allFoods, ...ejectedMasses];
+            allPlayers.forEach(otherPlayer => {
+                if (otherPlayer === this) return;
+                 otherPlayer.cells.forEach(cell => {
+                    // Can I eat this cell? Check against ALL my cells
+                    let canEat = false;
+                    for (const myCell of this.cells) {
+                        if (myCell.mass > cell.mass * MASS_CONSUME_RATIO) {
+                            canEat = true;
+                            break;
+                        }
+                    }
+                    if (canEat) potentialTargets.push(cell);
+                });
+            });
+
+            potentialTargets.forEach(item => {
+                const dist = distance(currentCenter, item);
+                if (dist < visibilityRange) {
+                    // Score: mass / (distance^1.5) - prioritize closer targets more
+                    const score = item.mass / (Math.pow(dist, 1.5) + 1);
+                    if (score > bestTargetScore) {
+                        bestTargetScore = score;
+                        this.target = item;
+                    }
+                }
+            });
+
+            if (this.target) {
+                this.action = 'chase';
+            } else {
+                this.action = 'wander';
+            }
+        }
+
+         // Basic check if splitting might be useful (needs refinement)
+        /* shouldSplitToChase() {
+            if (!this.target || this.cells.length >= SPLIT_MAX_CELLS / 2 || this.action !== 'chase') return false;
+            if (this.totalMass < SPLIT_MASS_THRESHOLD * 2) return false; // Need enough mass
+
+            const dist = distance(this.center, this.target);
+            const largestCell = this.cells.reduce((max, cell) => cell.mass > max.mass ? cell : max, this.cells[0]);
+
+            // Split if target is relatively small, far away, and largest cell can split
+            return this.target.mass < largestCell.mass / 3 &&
+                   dist > largestCell.radius * 5 &&
+                   largestCell.mass >= SPLIT_MASS_THRESHOLD;
+        } */
+    }
+
+    // --- Game Initialization ---
+    function init() {
+        gameRunning = true;
+        startScreen.style.display = 'none';
+        gameOverScreen.style.display = 'none';
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        player = new Player(playerNickname);
+        foods = [];
+        enemies = [];
+        ejectedMasses = [];
+        viruses = [];
+
+        // Initial food spawn
+        for (let i = 0; i < MAX_FOOD_COUNT; i++) { spawnFood(); }
+        // Initial virus spawn
+        for (let i = 0; i < VIRUS_COUNT; i++) { spawnVirus(); }
+        // Initial enemy spawn
+        for (let i = 0; i < ENEMY_COUNT; i++) {
+            const massMultiplier = 0.5 + Math.random() * 2;
+            enemies.push(new Enemy(massMultiplier));
+        }
+
+        // Reset camera to player start
+        camera = { x: player.center.x, y: player.center.y, zoom: 1 };
+        calculateInitialZoom(); // Set a reasonable starting zoom
+
+        // Reset mobile joystick state just in case
+        resetJoystick();
+
+        if (animationFrameId) cancelAnimationFrame(animationFrameId);
+        gameLoop();
+    }
+
+    function calculateInitialZoom() {
+        // Aim for the initial player cell to take up a certain portion of the screen
+        const initialRadius = player.cells[0].radius;
+        const targetViewRadius = Math.min(canvas.width, canvas.height) * 0.1; // e.g., 10% of smaller screen dim
+        camera.zoom = targetViewRadius / initialRadius;
+        camera.zoom = clamp(camera.zoom, 0.5, 2.0); // Clamp initial zoom
+    }
+
+
+    function spawnFood() {
+        if (foods.length < MAX_FOOD_COUNT) {
+            const pos = getRandomPosition(calculateRadius(FOOD_MASS));
+            foods.push(new Cell(pos.x, pos.y, FOOD_MASS, getRandomColor()));
+        }
+    }
+    function spawnVirus(x, y) {
+         if (viruses.length < VIRUS_COUNT) {
+             let pos;
+             if (x !== undefined && y !== undefined) {
+                 pos = {x, y}; // Respawn at specific location
+             } else {
+                 pos = getRandomPosition(calculateRadius(VIRUS_MASS));
+             }
+             // Ensure virus doesn't spawn too close to existing viruses or players initially
+             let tooClose = false;
+             for(const v of viruses) { if (distance(pos, v) < VIRUS_MASS * 3) { tooClose = true; break; } }
+             // Add checks for players if needed
+
+             if (!tooClose) {
+                  viruses.push(new Virus(pos.x, pos.y));
+             } else if (x === undefined) {
+                 // If random spawn failed, try again (limited retries recommended in production)
+                 spawnVirus();
+             }
+         }
+    }
+
+    // --- Input Handling ---
+    function setupInputListeners() {
+        detectDevice(); // Determine if mobile or PC
+
+        // --- Mouse Controls (PC) ---
+        if (!isMobile) {
+            window.addEventListener('mousemove', (event) => {
+                if (!gameRunning) return;
+                mouse.x = event.clientX;
+                mouse.y = event.clientY;
+                // Calculate world mouse position immediately for speed calculation
+                worldMouse = screenToWorld(mouse.x, mouse.y);
+            });
+
+            window.addEventListener('keydown', (event) => {
+                if (!gameRunning || !player) return;
+                if (event.code === 'Space' || event.keyCode === 32) {
+                    event.preventDefault();
+                    player.split(worldMouse.x, worldMouse.y);
+                }
+                if (event.code === 'KeyW' || event.keyCode === 87) {
+                    event.preventDefault();
+                    const newEjected = player.ejectMass(worldMouse.x, worldMouse.y);
+                    ejectedMasses.push(...newEjected);
+                }
+            });
+        }
+
+        // --- Touch Controls (Mobile) ---
+        if (isMobile) {
+            joystickArea.addEventListener('touchstart', handleTouchStart, { passive: false });
+            canvas.addEventListener('touchmove', handleTouchMove, { passive: false }); // Listen on canvas for movement
+            canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
+            canvas.addEventListener('touchcancel', handleTouchEnd, { passive: false }); // Treat cancel like end
+
+             // Prevent default zoom/scroll on the whole page for mobile
+             document.body.addEventListener('touchstart', (e) => {
+                 if (e.target === canvas || e.target.closest('.mobile-controls')) {
+                    // e.preventDefault(); // Be careful with this, might block button clicks if not specific enough
+                 }
+             }, { passive: false });
+             document.body.addEventListener('touchmove', (e) => {
+                 // Allow scrolling ONLY if target is not canvas or controls
+                 if (e.target === canvas || e.target.closest('.mobile-controls')) {
+                      e.preventDefault();
+                 }
+             }, { passive: false });
+
+
+            splitButton.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (!gameRunning || !player) return;
+                const target = getMobileTargetDirection();
+                player.split(target.x, target.y);
+            });
+
+            ejectButton.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (!gameRunning || !player) return;
+                const target = getMobileTargetDirection();
+                const newEjected = player.ejectMass(target.x, target.y);
+                ejectedMasses.push(...newEjected);
+            });
+        }
+
+        // --- Common Controls ---
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+             // Recalculate camera/zoom? Maybe not needed if zoom adjusts dynamically.
+        });
+
+        restartButton.addEventListener('click', () => {
+             // Instead of init(), go back to start screen? Or just restart? Let's restart.
+             init();
+        });
+
+         startButton.addEventListener('click', () => {
+             playerNickname = nicknameInput.value.trim() || "Player";
+             if (playerNickname.length > 15) playerNickname = playerNickname.substring(0, 15);
+             init(); // Start the game
+         });
+          nicknameInput.addEventListener('keyup', (event) => {
+             if (event.key === 'Enter') {
+                 startButton.click();
+             }
+         });
+
+    }
+
+    // --- Mobile Touch Handlers ---
+    function handleTouchStart(e) {
+        e.preventDefault(); // Prevent scroll/zoom start
+        if (joystickActive) return; // Allow only one touch for joystick
+
+        const touch = e.changedTouches[0];
+        touchId = touch.identifier;
+        joystickActive = true;
+        // Record start relative to joystickArea's bounding box for consistency
+        const rect = joystickArea.getBoundingClientRect();
+        joystickStartX = touch.clientX - rect.left - rect.width / 2;
+        joystickStartY = touch.clientY - rect.top - rect.height / 2;
+        // Reset delta immediately
+        joystickDeltaX = 0;
+        joystickDeltaY = 0;
+
+        // Move knob visually instantly (optional, can feel responsive)
+        updateJoystickKnob(touch.clientX, touch.clientY);
+    }
+
+    function handleTouchMove(e) {
+        if (!joystickActive) return;
+        e.preventDefault(); // Prevent scroll/zoom during move
+
+        let foundTouch = false;
+        for (let i = 0; i < e.changedTouches.length; i++) {
+            const touch = e.changedTouches[i];
+            if (touch.identifier === touchId) {
+                updateJoystickKnob(touch.clientX, touch.clientY);
+                foundTouch = true;
+                break;
+            }
+        }
+    }
+
+     function updateJoystickKnob(clientX, clientY) {
+          const rect = joystickArea.getBoundingClientRect();
+          // Calculate current position relative to joystickArea center
+          let currentX = clientX - rect.left - rect.width / 2;
+          let currentY = clientY - rect.top - rect.height / 2;
+
+          // Calculate delta from the initial touch position (or from center if preferred)
+          // Let's use delta from center for simpler direction vector
+          joystickDeltaX = currentX;
+          joystickDeltaY = currentY;
+
+          // Clamp the delta magnitude to the joystick radius
+          const magnitude = Math.sqrt(joystickDeltaX * joystickDeltaX + joystickDeltaY * joystickDeltaY);
+          const maxMagnitude = joystickRadius; // Use defined radius
+
+          if (magnitude > maxMagnitude) {
+              const scale = maxMagnitude / magnitude;
+              joystickDeltaX *= scale;
+              joystickDeltaY *= scale;
+          }
+
+          // Update knob visual position (relative to joystickBase center)
+          joystickKnob.style.left = `calc(50% + ${joystickDeltaX}px)`;
+          joystickKnob.style.top = `calc(50% + ${joystickDeltaY}px)`;
+     }
+
+    function handleTouchEnd(e) {
+        if (!joystickActive) return;
+
+        let touchEnded = false;
+        for (let i = 0; i < e.changedTouches.length; i++) {
+            if (e.changedTouches[i].identifier === touchId) {
+                touchEnded = true;
+                break;
+            }
+        }
+
+        if (touchEnded) {
+            resetJoystick();
+        }
+    }
+
+    function resetJoystick() {
+        joystickActive = false;
+        touchId = null;
+        joystickDeltaX = 0;
+        joystickDeltaY = 0;
+        // Reset knob visual position
+        joystickKnob.style.left = '50%';
+        joystickKnob.style.top = '50%';
+    }
+
+    // Determine target direction for mobile actions
+    function getMobileTargetDirection() {
+        let targetX = player.center.x;
+        let targetY = player.center.y;
+
+        // Use joystick direction if active
+        if (joystickActive && (joystickDeltaX !== 0 || joystickDeltaY !== 0)) {
+            targetX += joystickDeltaX * 100; // Project far out
+            targetY += joystickDeltaY * 100;
+        } else {
+            // Fallback: Use current velocity direction if cells are moving
+            let avgVX = 0, avgVY = 0;
+            if (player.cells.length > 0) {
+                player.cells.forEach(cell => { avgVX += cell.vx; avgVY += cell.vy; });
+                avgVX /= player.cells.length; avgVY /= player.cells.length;
+            }
+            if (Math.abs(avgVX) > 0.1 || Math.abs(avgVY) > 0.1) {
+                targetX += avgVX * 100;
+                targetY += avgVY * 100;
+            } else {
+                // Absolute fallback: straight up? Or based on last known direction?
+                targetY -= 100; // Default upward if no other info
+            }
+        }
+        return { x: targetX, y: targetY };
+    }
+
+
+    // --- Coordinate Transformation ---
+    function screenToWorld(screenX, screenY) { /* ... (same as before) ... */
+        const worldX = (screenX - canvas.width / 2) / camera.zoom + camera.x;
+        const worldY = (screenY - canvas.height / 2) / camera.zoom + camera.y;
+        return { x: worldX, y: worldY };
+    }
+
+    // --- Collision Detection & Handling ---
+    function checkCollisions() {
+        const allPlayers = [player, ...enemies];
+
+        // --- Cell vs Food/Ejected Mass ---
+        allPlayers.forEach(p => {
+            p.cells.forEach(cell => {
+                // Check Food
+                for (let i = foods.length - 1; i >= 0; i--) {
+                    if (cell.canEat(foods[i])) {
+                        cell.updateMass(cell.mass + foods[i].mass);
+                        foods.splice(i, 1); spawnFood();
+                    }
+                }
+                // Check Ejected Mass
+                 for (let i = ejectedMasses.length - 1; i >= 0; i--) {
+                     if (cell.canEat(ejectedMasses[i])) {
+                         cell.updateMass(cell.mass + ejectedMasses[i].mass);
+                         ejectedMasses.splice(i, 1);
+                     }
+                 }
+            });
+        });
+
+        // --- Cell vs Cell (Inter-player / Player vs Enemy) ---
+        for (let i = allPlayers.length - 1; i >= 0; i--) {
+            for (let j = i - 1; j >= 0; j--) {
+                const playerA = allPlayers[i]; const playerB = allPlayers[j];
+                for (let k = playerA.cells.length - 1; k >= 0; k--) {
+                    for (let l = playerB.cells.length - 1; l >= 0; l--) {
+                        // Check if player/enemy list changed mid-loop (due to elimination)
+                        if (!playerA.cells[k] || !playerB.cells[l]) continue;
+
+                        const cellA = playerA.cells[k]; const cellB = playerB.cells[l];
+
+                        const dist = distance(cellA, cellB);
+                        const overlap = cellA.radius + cellB.radius - dist;
+
+                        if (overlap > 0) { // Only check eating if overlapping
+                             if (cellA.canEat(cellB)) {
+                                 cellA.updateMass(cellA.mass + cellB.mass);
+                                 playerB.cells.splice(l, 1);
+                                 // Don't break here, cell A might eat more cells from B in one frame
+                             } else if (cellB.canEat(cellA)) {
+                                 cellB.updateMass(cellB.mass + cellA.mass);
+                                 playerA.cells.splice(k, 1);
+                                 break; // Cell A is gone, move to next cell A
+                             }
+                        }
+                    }
+                }
+            }
+        }
+
+         // --- Cell vs Virus ---
+         for (let i = allPlayers.length - 1; i >= 0; i--) {
+            const p = allPlayers[i];
+            for (let j = p.cells.length - 1; j >= 0; j--) {
+                const cell = p.cells[j];
+                if (!cell) continue; // Cell might have been eaten
+
+                for (let v = viruses.length - 1; v >= 0; v--) {
+                    const virus = viruses[v];
+                    const dist = distance(cell, virus);
+
+                    if (dist < cell.radius + virus.radius) { // Collision detected
+                         // Check if cell is large enough to be split
+                         if (cell.mass >= VIRUS_SPLIT_MASS_MIN && p.cells.length < SPLIT_MAX_CELLS) {
+                             // Player/Enemy hits virus: Burst the cell!
+                             p.cells.splice(j, 1); // Remove the hit cell
+                             viruses.splice(v, 1); // Remove the virus
+
+                             // Burst effect: Create multiple smaller cells from the hit cell's mass
+                             const numSplinters = clamp(Math.floor(cell.mass / 25), 2, SPLIT_MAX_CELLS - p.cells.length); // More splinters for larger mass
+                             const splinterMass = cell.mass / (numSplinters + 1); // +1 to account for potential remainder/loss
+
+                             if (splinterMass > 5) { // Only create if splinters have meaningful mass
+                                 for (let s = 0; s < numSplinters; s++) {
+                                     if (p.cells.length >= SPLIT_MAX_CELLS) break;
+
+                                     const angle = (Math.PI * 2 / numSplinters) * s + Math.random() * 0.5 - 0.25; // Spread out
+                                     const burstSpeed = 20 + Math.random() * 10;
+                                     const burstDist = cell.radius * 0.5;
+                                     const newX = cell.x + Math.cos(angle) * burstDist;
+                                     const newY = cell.y + Math.sin(angle) * burstDist;
+
+                                     const splinter = new Cell(newX, newY, splinterMass, cell.color);
+                                     splinter.vx = Math.cos(angle) * burstSpeed;
+                                     splinter.vy = Math.sin(angle) * burstSpeed;
+                                     splinter.canMerge = false;
+                                     splinter.mergeTimer = MERGE_TIME * 1.5; // Longer merge time after virus burst
+                                     splinter.wobbleIntensity = splinter.maxWobble;
+                                     p.cells.push(splinter);
+                                 }
+                             }
+                             // Respawn virus elsewhere after a short delay
+                             setTimeout(() => spawnVirus(), 2000);
+                             gotoNextCell; // Cell J is gone, move to the next cell J
+                         }
+                         // Check if Ejected Mass hits virus (Feeding)
+                         // This check should technically be in the ejected mass section? No, here is fine.
+                         // Let's simplify: virus doesn't react to ejected mass in this version yet.
+                         // It would require the virus to grow slightly and shoot off a new virus piece.
+                    }
+                }
+                 gotoNextCell:; // Label for jumping out of virus loop for the current cell
+            }
+        }
+
+
+        // --- Check Eliminations ---
+        if (player.cells.length === 0 && gameRunning) {
+            gameOver();
+        }
+        for (let i = enemies.length - 1; i >= 0; i--) {
+            if (enemies[i].cells.length === 0) {
+                enemies.splice(i, 1);
+                if (enemies.length < ENEMY_COUNT) { // Maintain enemy count
+                     setTimeout(() => enemies.push(new Enemy(0.3 + Math.random()*0.7)), 3000); // Respawn smaller enemy after delay
+                }
+            }
+        }
+    }
+
+     // --- Game Over ---
+    function gameOver() { /* ... (same as before) ... */
+        gameRunning = false;
+        finalScoreElement.textContent = `Final Mass: ${Math.floor(lastPlayerMass)}`;
+        gameOverScreen.style.display = 'flex';
+        if (animationFrameId) cancelAnimationFrame(animationFrameId);
+        resetJoystick(); // Ensure joystick is reset on game over
+    }
+    let lastPlayerMass = 0;
+
+    // --- Leaderboard Update ---
+    function updateLeaderboard() {
+         const allPlayers = [player, ...enemies].filter(p => p.cells.length > 0); // Include only active players
+         allPlayers.sort((a, b) => b.totalMass - a.totalMass);
+
+         let leaderboardHTML = "";
+         const topN = Math.min(allPlayers.length, 10); // Show top 10
+
+         for (let i = 0; i < topN; i++) {
+             const p = allPlayers[i];
+             const isPlayer = (p === player);
+             leaderboardHTML += `<li style="${isPlayer ? 'font-weight:bold; color:#1a5faa;' : ''}">
+                 ${i + 1}. ${p.nickname} - ${Math.floor(p.totalMass)}
+             </li>`;
+         }
+         leaderboardList.innerHTML = leaderboardHTML;
+    }
+
+
+    // --- Game Loop ---
+    function update() {
+        if (!gameRunning || !player) return;
+
+        let targetX, targetY;
+
+        if (isMobile) {
+             // Calculate target position based on joystick
+             targetX = player.center.x + joystickDeltaX * 100; // Project far out
+             targetY = player.center.y + joystickDeltaY * 100;
+        } else {
+            // Use pre-calculated worldMouse for PC
+            targetX = worldMouse.x;
+            targetY = worldMouse.y;
+        }
+
+        // Update player
+        player.update(targetX, targetY);
+        lastPlayerMass = player.totalMass;
+
+        // Update enemies
+        enemies.forEach(enemy => enemy.updateAI(foods, [player, ...enemies], viruses));
+
+         // Update ejected masses (decay and movement)
+        for (let i = ejectedMasses.length - 1; i >= 0; i--) {
+            const mass = ejectedMasses[i];
+            mass.applyMovement();
+             // Use assigned decay rate or default if missing
+            mass.updateMass(mass.mass * (mass.massDecayRate || EJECTED_MASS_DECAY_RATE));
+            if (mass.mass < 1) {
+                ejectedMasses.splice(i, 1);
+            }
+        }
+
+        // Update Viruses (only wobble/visuals, no movement logic needed here)
+        viruses.forEach(v => {
+            v.wobbleIntensity *= v.wobbleDecay; // Keep wobbling
+        });
+
+
+        // Check collisions
+        checkCollisions(); // This handles eating and eliminations
+
+        // Update camera position (smooth follow)
+        if (player.cells.length > 0) {
+             const targetCamX = player.center.x;
+             const targetCamY = player.center.y;
+             camera.x = lerp(camera.x, targetCamX, 0.08);
+             camera.y = lerp(camera.y, targetCamY, 0.08);
+
+             // Update camera zoom based on player size/spread
+             const playerBounds = player.getBoundingBox();
+             const maxDim = Math.max(playerBounds.width, playerBounds.height, 150); // Min view size
+             // Adjust base zoom: smaller value zooms IN more initially
+             const baseZoom = 0.7;
+             const targetZoom = Math.pow(Math.max(canvas.width, canvas.height) / maxDim, ZOOM_FACTOR) * baseZoom;
+             camera.zoom = lerp(camera.zoom, targetZoom, 0.04); // Slower zoom lerp
+             camera.zoom = clamp(camera.zoom, 1 / (WORLD_WIDTH / canvas.width), 3.0); // Clamp zoom (min = see whole world?, max = 3x)
+
+        }
+
+
+         // Update Scoreboard
+        scoreBoard.textContent = `Mass: ${Math.floor(player.totalMass)}`;
+
+        // Update Leaderboard periodically
+        leaderboardUpdateCounter++;
+        if (leaderboardUpdateCounter >= 20) { // Update every 20 frames
+            updateLeaderboard();
+            leaderboardUpdateCounter = 0;
+        }
+    }
+
+    function draw() {
+        // Clear canvas
+        context.clearRect(0, 0, canvas.width, canvas.height);
+
+        context.save();
+        // Apply camera transform
+        context.translate(canvas.width / 2, canvas.height / 2);
+        context.scale(camera.zoom, camera.zoom);
+        context.translate(-camera.x, -camera.y);
+
+        // Draw background grid
+        drawGrid();
+
+        // Draw game objects (order: back to front)
+        foods.forEach(food => food.draw(context));
+        ejectedMasses.forEach(mass => mass.draw(context));
+        viruses.forEach(virus => virus.draw(context));
+        enemies.forEach(enemy => enemy.draw(context));
+        if (player) player.draw(context); // Draw player last
+
+        context.restore();
+    }
+
+    function drawGrid() { /* ... (same as before, but use clamp for coordinates) ... */
+         context.strokeStyle = "#ddd";
+         context.lineWidth = 1 / camera.zoom; // Dynamic line width
+
+         const viewBounds = {
+             left: camera.x - (canvas.width / 2 / camera.zoom), right: camera.x + (canvas.width / 2 / camera.zoom),
+             top: camera.y - (canvas.height / 2 / camera.zoom), bottom: camera.y + (canvas.height / 2 / camera.zoom)
+         };
+
+         const startX = Math.floor(viewBounds.left / GRID_SIZE) * GRID_SIZE;
+         const endX = Math.ceil(viewBounds.right / GRID_SIZE) * GRID_SIZE;
+         for (let x = startX; x <= endX; x += GRID_SIZE) {
+             context.beginPath();
+             const clampedX = clamp(x, 0, WORLD_WIDTH); // Ensure line endpoint is within world
+             context.moveTo(clampedX, clamp(viewBounds.top - GRID_SIZE, 0, WORLD_HEIGHT)); // Start slightly above view or at world edge
+             context.lineTo(clampedX, clamp(viewBounds.bottom + GRID_SIZE, 0, WORLD_HEIGHT)); // End slightly below view or at world edge
+             if (x >= 0 && x <= WORLD_WIDTH) context.stroke();
+         }
+
+         const startY = Math.floor(viewBounds.top / GRID_SIZE) * GRID_SIZE;
+         const endY = Math.ceil(viewBounds.bottom / GRID_SIZE) * GRID_SIZE;
+         for (let y = startY; y <= endY; y += GRID_SIZE) {
+             context.beginPath();
+             const clampedY = clamp(y, 0, WORLD_HEIGHT); // Ensure line endpoint is within world
+             context.moveTo(clamp(viewBounds.left - GRID_SIZE, 0, WORLD_WIDTH), clampedY); // Start slightly left of view or at world edge
+             context.lineTo(clamp(viewBounds.right + GRID_SIZE, 0, WORLD_WIDTH), clampedY); // End slightly right of view or at world edge
+             if (y >= 0 && y <= WORLD_HEIGHT) context.stroke();
+         }
+
+         // Draw world boundary
+         context.strokeStyle = "#888"; context.lineWidth = 5 / camera.zoom;
+         context.strokeRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
+    }
+
+    function gameLoop() {
+        update();
+        draw();
+        if (gameRunning) {
+             animationFrameId = requestAnimationFrame(gameLoop);
+        }
+    }
+
+    // --- Start Setup ---
+    setupInputListeners(); // Setup listeners based on detected device
+    // Don't call init() here, wait for Start Button click.
+    // Show start screen initially
+    startScreen.style.display = 'flex';
+
+
+</script>
+
+</body>
+</html>
