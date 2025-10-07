@@ -2,15 +2,18 @@
     "sections": [
         {
             "id": "main",
-            "name": "Navigation"
+            "name": "Navigation",
+            "pages": 1
         },
         {
             "id": "projects",
-            "name": "My Work"
+            "name": "My Work",
+            "pages": 6
         },
         {
             "id": "connect",
-            "name": "Connect"
+            "name": "Connect",
+            "pages": 1
         }
     ],
     "pages": [
@@ -50,8 +53,8 @@
             "section": "projects"
         },
         {
-            "name": "Blog",
-            "url": "#blog",
+            "name": "Contact",
+            "url": "#contact",
             "section": "connect"
         }
     ]
