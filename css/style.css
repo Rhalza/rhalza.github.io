@@ -10,7 +10,7 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
     padding-top: 70px;
-    padding-bottom: 155px;
+    padding-bottom: 60px;
     user-select: none;
 }
 .glass-effect, .song-info, .time-info, input, textarea {
@@ -26,21 +26,26 @@ body {
 }
 header {
     position: fixed;
+    top: 0;
+    left: 0;
     width: 100%;
     background-color: var(--header-footer-bg);
     padding: 15px 30px;
     box-sizing: border-box;
     z-index: 1000;
-    top: 0;
     height: 70px;
 }
 footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
     width: 100%;
     background-color: var(--header-footer-bg);
     padding: 20px 30px;
     box-sizing: border-box;
     height: 60px;
     text-align: center;
+    z-index: 1000;
 }
 .header-container {
     display: flex;
