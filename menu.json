@@ -20,14 +20,34 @@
             "section": "main"
         },
         {
+            "name": "3D Sandbox",
+            "url": "3d.html",
+            "section": "projects"
+        },
+        {
+            "name": "2048",
+            "url": "2048.html",
+            "section": "projects"
+        },
+        {
+            "name": "Agar.io w/ Bots",
+            "url": "agario.html",
+            "section": "projects"
+        },
+        {
             "name": "Chess w/ Bot",
             "url": "chess.html",
             "section": "projects"
         },
         {
-            "name": "Contact",
-            "url": "#contact",
-            "section": "connect"
+            "name": "Minesweeper",
+            "url": "mine.html",
+            "section": "projects"
+        },
+        {
+            "name": "UNO w/ Bots",
+            "url": "uno.html",
+            "section": "projects"
         },
         {
             "name": "Blog",
