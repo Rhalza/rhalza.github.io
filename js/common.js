@@ -59,9 +59,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 menuContainer.appendChild(sectionDiv);
 
                 title.addEventListener('click', () => {
-                    if (pageList.style.maxHeight) {
-                        pageList.style.maxHeight = null;
-                    } else {
+                    const isAlreadyOpen = pageList.style.maxHeight;
+                    document.querySelectorAll('#side-menu .menu-pages').forEach((el) => el.style.maxHeight = null);
+                    if (!isAlreadyOpen) {
                         pageList.style.maxHeight = pageList.scrollHeight + "px";
                     }
                 });
