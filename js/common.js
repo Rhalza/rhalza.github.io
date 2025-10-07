@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize Particles.js
     particlesJS('particles-js', {
         particles: {
             number: { value: 80, density: { enable: true, value_area: 800 } },
@@ -22,21 +21,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const sideMenu = document.getElementById('side-menu');
     const closeBtn = document.getElementById('close-btn');
 
-    // Event listener to OPEN the menu
     hamburgerIcon.addEventListener('click', () => {
         sideMenu.classList.add('open');
     });
 
-    // Event listener to CLOSE the menu
     closeBtn.addEventListener('click', () => {
         sideMenu.classList.remove('open');
     });
 
-    // Fetch and build the menu
     fetch('menu.json')
         .then(response => response.json())
         .then(data => {
             const { sections, pages } = data;
+            const menuContainer = document.querySelector('#side-menu');
+            
             sections.forEach(section => {
                 const sectionDiv = document.createElement('div');
                 sectionDiv.className = 'menu-section';
@@ -58,16 +56,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
 
                 sectionDiv.appendChild(pageList);
-                sideMenu.appendChild(sectionDiv);
+                menuContainer.appendChild(sectionDiv);
 
                 title.addEventListener('click', () => {
-                    pageList.classList.toggle('show');
+                    if (pageList.style.maxHeight) {
+                        pageList.style.maxHeight = null;
+                    } else {
+                        pageList.style.maxHeight = pageList.scrollHeight + "px";
+                    }
                 });
             });
         })
         .catch(error => console.error('Error fetching menu.json:', error));
 
-    // Fetch and populate the footer
     fetch('footer.json')
         .then(response => response.json())
         .then(data => {
