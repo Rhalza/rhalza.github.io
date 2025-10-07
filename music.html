@@ -6,9 +6,12 @@
     <title>Rhalzaverse - My Music</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/music.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
+
     <div id="particles-js"></div>
+
     <header>
         <div class="header-container">
             <span class="site-title">Rhalzaverse</span>
@@ -19,42 +22,57 @@
             </div>
         </div>
     </header>
+
     <nav id="side-menu">
         <a href="javascript:void(0)" class="close-btn" id="close-btn">&times;</a>
     </nav>
+
     <main>
         <section class="glass-effect" id="song-list-container">
             <h2>Music Library</h2>
             <div id="song-list"></div>
         </section>
     </main>
-    <div id="music-player-container">
-        <div id="waveform"></div>
-        <div id="player-controls">
-            <div class="song-info">
-                <img src="media/covers/rhalza.png" alt="Album Cover" id="player-cover-art">
-                <div class="text-info">
-                    <span id="player-title">Select a song</span>
-                    <span id="player-artist"></span>
+    
+    <div id="sticky-bottom-wrapper">
+        <div id="music-player-container">
+            <div id="waveform"></div>
+            <div id="player-controls">
+                <div class="song-info">
+                    <img src="media/covers/rhalza.png" alt="Album Cover" id="player-cover-art">
+                    <div class="text-info">
+                        <span id="player-title">Select a song</span>
+                        <span id="player-artist"></span>
+                    </div>
+                </div>
+                <div class="center-controls">
+                    <button id="loop-btn" title="Loop"><i class="fa-solid fa-repeat"></i></button>
+                    <button id="prev-btn" title="Previous"><i class="fa-solid fa-backward-step"></i></button>
+                    <button id="backward-btn" title="Back 10s"><i class="fa-solid fa-rotate-left"></i></button>
+                    <button id="play-pause-btn" title="Play/Pause"><i class="fa-solid fa-play"></i></button>
+                    <button id="forward-btn" title="Forward 10s"><i class="fa-solid fa-rotate-right"></i></button>
+                    <button id="next-btn" title="Next"><i class="fa-solid fa-forward-step"></i></button>
+                </div>
+                <div class="right-controls">
+                    <div class="time-info">
+                        <span id="current-time">0:00</span> / <span id="total-time">0:00</span>
+                    </div>
+                    <div class="volume-control">
+                        <button id="mute-btn" title="Mute"><i class="fa-solid fa-volume-high"></i></button>
+                        <input id="volume-slider" type="range" min="0" max="1" step="0.01" value="1">
+                    </div>
                 </div>
             </div>
-            <div class="center-controls">
-                <button id="prev-btn" title="Previous">⏮</button>
-                <button id="backward-btn" title="Back 10s">↩</button>
-                <button id="play-pause-btn" title="Play/Pause">▶</button>
-                <button id="forward-btn" title="Forward 10s">↪</button>
-                <button id="next-btn" title="Next">⏭</button>
-            </div>
-            <div class="time-info">
-                <span id="current-time">0:00</span> / <span id="total-time">0:00</span>
-            </div>
         </div>
+
+        <footer>
+            <div id="footer-content"></div>
+        </footer>
     </div>
-    <footer>
-        <div id="footer-content"></div>
-    </footer>
+
     <script src="https://unpkg.com/wavesurfer.js@7"></script>
     <script src="js/common.js"></script>
     <script src="js/music.js"></script>
+
 </body>
 </html>
