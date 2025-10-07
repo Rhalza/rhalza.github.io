@@ -1,3 +1,6 @@
+body {
+    padding-bottom: 155px;
+}
 #song-list {
     display: flex;
     flex-direction: column;
@@ -39,16 +42,14 @@
     font-size: 0.9em;
     color: #ccc;
 }
-#sticky-bottom-wrapper {
+#music-player-container {
     position: fixed;
-    bottom: 0;
+    bottom: 60px;
     left: 0;
     width: 100%;
-    z-index: 999;
-}
-#music-player-container {
     height: 95px;
     background-color: var(--header-footer-bg);
+    z-index: 999;
     display: flex;
     flex-direction: column;
 }
@@ -157,6 +158,7 @@
     .time-info { display: none; }
 }
 @media (max-width: 768px) {
+    body { padding-bottom: 185px; }
     #music-player-container { height: 125px; }
     #player-controls {
         flex-wrap: wrap;
