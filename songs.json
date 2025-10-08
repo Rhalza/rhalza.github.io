@@ -1,5 +1,11 @@
 [
     {
+        "title": "Eye of the Storm",
+        "artist": "Rhalza",
+        "coverFile": "storm.png",
+        "audioFile": "storm.mp3"
+    },
+    {
         "title": "A World Apart",
         "artist": "Rhalza",
         "coverFile": "rhalza.png",
