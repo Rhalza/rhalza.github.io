@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rhalzaverse - RyxIDE</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/ide.css">
 </head>
@@ -26,29 +27,46 @@
         <a href="javascript:void(0)" class="close-btn" id="close-btn">&times;</a>
     </nav>
 
-    <main id="ide-container">
-        <div id="file-explorer" class="ide-panel glass-effect">
-            <div class="panel-header">File Explorer</div>
-            <div id="file-tree" class="panel-content"></div>
+    <div id="ide-layout-container">
+        <div id="activity-bar">
+            <div class="action-item active" data-view-id="file-explorer-panel"><i class="fas fa-files"></i></div>
+            <div class="action-item" data-view-id="search-panel"><i class="fas fa-search"></i></div>
+            <div class="action-item" data-view-id="run-panel"><i class="fas fa-play"></i></div>
         </div>
-        <div id="main-content">
-            <div id="code-editor-panel" class="ide-panel glass-effect">
-                <div class="panel-header">
-                    <span>Editor</span>
-                    <button id="run-button">Run Code</button>
-                </div>
-                <div id="editor-container" class="panel-content"></div>
-            </div>
-            <div id="terminal" class="ide-panel glass-effect">
-                <div class="panel-header">Console</div>
-                <div id="terminal-output" class="panel-content"></div>
-                <div class="terminal-input-container">
-                    <span>&gt;</span>
-                    <input type="text" id="terminal-input" placeholder="Enter command...">
-                </div>
+        <div id="side-bar">
+            <div class="side-bar-view" id="file-explorer-panel">
+                <div class="panel-header">File Explorer</div>
+                <div id="file-tree" class="panel-content"></div>
             </div>
         </div>
-    </main>
+        <main id="main-content">
+            <div id="editor-group">
+                <div id="editor-container"></div>
+            </div>
+            <div id="panel-container">
+                <div id="panel-tabs">
+                    <div class="tab active" data-panel-id="terminal-panel">TERMINAL</div>
+                    <div class="tab" data-panel-id="problems-panel">PROBLEMS</div>
+                    <div class="tab" data-panel-id="output-panel">OUTPUT</div>
+                </div>
+                <div id="panel-content">
+                    <div class="panel active" id="terminal-panel">
+                        <div id="terminal-output"></div>
+                        <div class="terminal-input-container">
+                            <span>&gt;</span>
+                            <input type="text" id="terminal-input" placeholder="Enter command...">
+                        </div>
+                    </div>
+                    <div class="panel" id="problems-panel">No problems have been detected.</div>
+                    <div class="panel" id="output-panel"></div>
+                </div>
+            </div>
+        </main>
+        <div id="status-bar">
+            <div class="status-left">Ready</div>
+            <div class="status-right">Ln 1, Col 1</div>
+        </div>
+    </div>
 
     <footer>
         <div id="footer-content"></div>
@@ -56,11 +74,12 @@
 
     <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
     <script src="js/common.js"></script>
-
-    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.33.0/min/vs/loader.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.54.0/min/vs/loader.js"></script>
     <script src="js/ide/file-explorer.js"></script>
     <script src="js/ide/terminal.js"></script>
     <script src="js/ide/editor.js"></script>
+    <script src="js/ide/ui.js"></script>
     <script src="js/ide/main.js"></script>
 
 </body>
