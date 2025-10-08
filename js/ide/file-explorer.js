@@ -9,12 +9,26 @@ RyxIDE.fileExplorer = (function() {
         { name: 'README.md', type: 'file' }
     ];
 
+    function getIcon(type) {
+        const i = document.createElement('i');
+        i.classList.add('fas');
+        if (type === 'folder') {
+            i.classList.add('fa-folder');
+        } else {
+            i.classList.add('fa-file-code');
+        }
+        return i;
+    }
+
     function createTree(files) {
         const ul = document.createElement('ul');
         files.forEach(file => {
             const li = document.createElement('li');
-            li.textContent = file.name;
-            li.classList.add(file.type);
+            li.appendChild(getIcon(file.type));
+            const span = document.createElement('span');
+            span.textContent = file.name;
+            li.appendChild(span);
+
             if (file.type === 'folder' && file.children) {
                 li.appendChild(createTree(file.children));
             }
@@ -27,12 +41,8 @@ RyxIDE.fileExplorer = (function() {
         const container = document.getElementById(containerId);
         if (container) {
             container.appendChild(createTree(fileStructure));
-        } else {
-            console.error(`File explorer container with id "${containerId}" not found.`);
         }
     }
 
-    return {
-        init
-    };
+    return { init };
 })();
