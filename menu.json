@@ -14,11 +14,6 @@
             "id": "other",
             "name": "Other",
             "pages": 1
-        },
-        {
-            "id": "connect",
-            "name": "Connect",
-            "pages": 1
         }
     ],
     "pages": [
@@ -63,9 +58,14 @@
             "section": "other"
         },
         {
+            "name": "About Rhalza",
+            "url": "#about",
+            "section": "other"
+        },
+        {
             "name": "Contact",
-            "url": "#contact",
-            "section": "connect"
+            "url": "",
+            "section": "other"
         }
     ]
 }
