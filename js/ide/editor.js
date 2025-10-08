@@ -3,48 +3,34 @@ RyxIDE.editor = (function() {
     let editorInstance;
 
     function init(containerId, callback) {
-        if (!window.require) {
-            console.error('Monaco Editor loader not found.');
-            return;
-        }
-
-        require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.33.0/min/vs' }});
+        require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.54.0/min/vs' }});
         
         window.MonacoEnvironment = {
             getWorkerUrl: function (workerId, label) {
                 return `data:text/javascript;charset=utf-8,${encodeURIComponent(`
                 self.MonacoEnvironment = {
-                    baseUrl: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.33.0/min/'
+                    baseUrl: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.54.0/min/'
                 };
-                importScripts('https://cdn.jsdelivr.net/npm/monaco-editor@0.33.0/min/vs/base/worker/workerMain.js');`
+                importScripts('https://cdn.jsdelivr.net/npm/monaco-editor@0.54.0/min/vs/base/worker/workerMain.js');`
                 )}`;
             }
         };
 
         require(['vs/editor/editor.main'], function() {
             const container = document.getElementById(containerId);
-            if (!container) {
-                 console.error(`Container with id "${containerId}" not found.`);
-                 return;
-            }
-
             editorInstance = monaco.editor.create(container, {
-                value: [
-                    'function greet() {',
-                    '\tconst message = "Hello from the RyxIDE!";',
-                    '\treturn message;',
-                    '}',
-                    '',
-                    'greet();'
-                ].join('\n'),
+                value: 'console.log("Hello, RyxIDE!");',
                 language: 'javascript',
                 theme: 'vs-dark',
                 automaticLayout: true
             });
 
-            if (callback) {
-                callback();
-            }
+            editorInstance.onDidChangeCursorPosition(e => {
+                const pos = e.position;
+                RyxIDE.ui.updateStatusBar(`Ln ${pos.lineNumber}, Col ${pos.column}`);
+            });
+
+            if (callback) callback();
         });
     }
 
@@ -52,8 +38,5 @@ RyxIDE.editor = (function() {
         return editorInstance ? editorInstance.getValue() : '';
     }
 
-    return {
-        init,
-        getCode
-    };
+    return { init, getCode };
 })();
