@@ -1,5 +1,11 @@
 [
     {
+        "title": "Terrorbyte",
+        "artist": "Rhalza",
+        "coverFile": "rhalza.png",
+        "audioFile": "terror.mp3"
+    },
+    {
         "title": "Eye of the Storm",
         "artist": "Rhalza",
         "coverFile": "storm.png",
