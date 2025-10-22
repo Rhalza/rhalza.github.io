@@ -1,5 +1,11 @@
 [
     {
+        "title": "Cosmia",
+        "artist": "Rhalza",
+        "coverFile": "rhalza.png",
+        "audioFile": "cosmia.mp3"
+    },
+    {
         "title": "Terrorbyte",
         "artist": "Rhalza",
         "coverFile": "rhalza.png",
