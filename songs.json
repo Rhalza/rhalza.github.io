@@ -1,5 +1,11 @@
 [
     {
+        "title": "Shatterpoint",
+        "artist": "Rhalza & Allan D.",
+        "coverFile": "shatter.png",
+        "audioFile": "shatter.mp3"
+    },
+    {
         "title": "Cosmia",
         "artist": "Rhalza",
         "coverFile": "rhalza.png",
