@@ -1,5 +1,11 @@
 [
     {
+        "title": "Limitless",
+        "artist": "Rhalza",
+        "coverFile": "limit.png",
+        "audioFile": "limit.mp3"
+    },
+    {
         "title": "Shatterpoint",
         "artist": "Rhalza & Allan D.",
         "coverFile": "shatter.png",
