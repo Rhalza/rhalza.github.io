@@ -38,7 +38,45 @@
         <div id="footer-content">
         </div>
     </footer>
+    <script>
+    const sequence = ['m','e','m','e'];
+    let progress = 0;
 
+    const sounds = {
+        m1: new Audio('audio/sfx/rat1.mp3'),
+        e1: new Audio('audio/sfx/rat2.mp3'),
+        m2: new Audio('audio/sfx/rat3.mp3'),
+        e2: new Audio('audio/sfx/rat4.mp3')
+    };
+
+    Object.values(sounds).forEach(s => {
+        s.volume = 0.7;
+        s.preload = 'auto';
+    });
+
+    document.addEventListener('keydown', e => {
+        const key = e.key.toLowerCase();
+
+        if (key === sequence[progress]) {
+            const soundKey = ['m1','e1','m2','e2'][progress];
+            const clone = sounds[soundKey].cloneNode(true);
+                clone.volume = 0.7;
+                clone.play();
+                progress++;
+        
+            if (progress === sequence.length) {
+                const dance = new Audio('audio/sfx/rat/dance.mp3');
+                dance.volume = 0.9;
+                dance.play();
+                progress = 0;
+            }
+        } else if (sequence.includes(key)) {
+            progress = sequence.indexOf(key) === 0 ? 1 : 0;
+        } else {
+            progress = 0;
+        }
+    });
+    </script>
     <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
     <script src="js/common.js"></script>
 
