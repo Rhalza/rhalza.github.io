@@ -38,7 +38,7 @@
         <div id="footer-content">
         </div>
     </footer>
-    <script>
+        <script>
     const sequence = ['m','e','m','e'];
     let progress = 0;
 
@@ -57,21 +57,34 @@
     document.addEventListener('keydown', e => {
         const key = e.key.toLowerCase();
 
-        if (key === sequence[progress]) {
-            const soundKey = ['m1','e1','m2','e2'][progress];
-            const clone = sounds[soundKey].cloneNode(true);
+        if (key === 'm' || key === 'e') {
+            if (key === sequence[progress]) {
+                const soundKey = ['m1','e1','m2','e2'][progress];
+                const clone = sounds[soundKey].cloneNode(true);
                 clone.volume = 0.7;
                 clone.play();
                 progress++;
-        
-            if (progress === sequence.length) {
-                const dance = new Audio('audio/sfx/rat/dance.mp3');
-                dance.volume = 0.9;
-                dance.play();
-                progress = 0;
+                
+                if (progress === sequence.length) {
+                    setTimeout(() => {
+                        const dance = new Audio('audio/sfx/rat/dance.mp3');
+                        dance.volume = 0.9;
+                        dance.play();
+                    }, 493);
+                    progress = 0;
+                }
+            } else {
+                if (key === 'm') {
+                    const clone = sounds.m1.cloneNode(true);
+                    clone.volume = 0.7;
+                    clone.play();
+                } else if (key === 'e') {
+                    const clone = sounds.e1.cloneNode(true);
+                    clone.volume = 0.7;
+                    clone.play();
+                }
+                progress = (key === 'm') ? 1 : 0;
             }
-        } else if (sequence.includes(key)) {
-            progress = sequence.indexOf(key) === 0 ? 1 : 0;
         } else {
             progress = 0;
         }
