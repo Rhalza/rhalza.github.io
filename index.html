@@ -50,7 +50,46 @@
     <footer>
         <div id="footer-content"></div>
     </footer>
+    <script>
+    const sounds = {
+        u: new Audio('audio/sfx/U.mp3'),
+        i: new Audio('audio/sfx/I.mp3'),
+        a: new Audio('audio/sfx/A.mp3')
+    };
 
+    Object.values(sounds).forEach(s => {
+        s.volume = 0.6;
+        s.preload = 'auto';
+    });
+
+    const pattern = ['u','i','i','a','i','u','i','i','i','i','a','i'];
+    let buffer = [];
+
+    document.addEventListener('keydown', e => {
+        const key = e.key.toLowerCase();
+        let soundKey = null;
+        if (key === 'u' || key === 'o') soundKey = 'u';
+        else if (key === 'i') soundKey = 'i';
+        else if (key === 'a') soundKey = 'a';
+    
+        if (soundKey) {
+            const clone = sounds[soundKey].cloneNode(true);
+            clone.volume = 0.6;
+            clone.play();
+
+            buffer.push(soundKey);
+            if (buffer.length > pattern.length) buffer.shift();
+
+            if (buffer.length === pattern.length && buffer.every((v,i) => v === pattern[i])) {
+                const num = Math.random() < 0.5 ? 1 : 2;
+                const cat = new Audio(`audio/sfx/cat/${num}.mp3`);
+                cat.volume = 0.8;
+                cat.play();
+                buffer = [];
+            }
+        }
+    });
+    </script>
     <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
     <script src="js/common.js"></script>
 
