@@ -1,8 +1,8 @@
-const initDigitalTwin = () => {
-    const esriImagery = new Cesium.UrlTemplateImageryProvider({
-        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-        maximumLevel: 19
-    });
+const initDigitalTwin = async () => {
+    const esriImagery = await Cesium.ArcGisMapServerImageryProvider.fromUrl(
+        'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer',
+        { enablePickFeatures: false }
+    );
 
     const viewer = new Cesium.Viewer('cesiumContainer', {
         baseLayer: new Cesium.ImageryLayer(esriImagery),
@@ -30,7 +30,7 @@ const initDigitalTwin = () => {
 
     viewer.scene.highDynamicRange = false;
     viewer.scene.postProcessStages.fxaa.enabled = false;
-    viewer.scene.globe.enableLighting = true;
+    viewer.scene.globe.enableLighting = false;
     viewer.scene.globe.showWaterEffect = false;
     viewer.scene.globe.depthTestAgainstTerrain = false;
 
