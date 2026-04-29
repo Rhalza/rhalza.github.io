@@ -1,12 +1,12 @@
 const initDigitalTwin = () => {
-    // Unfailing Google Satellite imagery for perfect Z=0 outer space down to streets
-    const satelliteImagery = new Cesium.UrlTemplateImageryProvider({
-        url: 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}',
-        maximumLevel: 20
+    const esriImagery = new Cesium.UrlTemplateImageryProvider({
+        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        maximumLevel: 19,
+        hasAlphaChannel: false
     });
 
     const viewer = new Cesium.Viewer('cesiumContainer', {
-        baseLayer: new Cesium.ImageryLayer(satelliteImagery),
+        baseLayer: new Cesium.ImageryLayer(esriImagery),
         terrainProvider: new Cesium.EllipsoidTerrainProvider(),
         animation: false,
         baseLayerPicker: false,
@@ -28,24 +28,21 @@ const initDigitalTwin = () => {
         }
     });
 
-    // Mobile-safe performance settings
     viewer.scene.highDynamicRange = false;
     viewer.scene.postProcessStages.fxaa.enabled = false;
     
-    // Disable real-time globe shadows so Earth is ALWAYS beautifully visible
     viewer.scene.globe.enableLighting = false;
     viewer.scene.globe.showWaterEffect = false;
     viewer.scene.globe.depthTestAgainstTerrain = false;
+    
+    viewer.scene.globe.baseColor = Cesium.Color.fromCssColorString('#0a1423');
 
-    // Force time of day to position the Sun perfectly for the lens flare
     viewer.clock.currentTime = Cesium.JulianDate.fromIso8601("2024-05-21T12:00:00Z");
 
-    // Enhance atmosphere for a glowing cinematic look
     viewer.scene.skyAtmosphere.brightnessShift = 0.4;
     viewer.scene.skyAtmosphere.saturationShift = 0.3;
     viewer.scene.skyAtmosphere.hueShift = 0.05;
 
-    // Cinematic Bloom
     try {
         const bloom = viewer.scene.postProcessStages.bloom;
         bloom.enabled = true;
@@ -57,25 +54,23 @@ const initDigitalTwin = () => {
         bloom.uniforms.stepSize = 1.0;
     } catch(e) {}
 
-    // Anamorphic Lens Flare / Movie Poster Light Warping
     try {
         const lensFlare = Cesium.PostProcessStageLibrary.createLensFlareStage();
         viewer.scene.postProcessStages.add(lensFlare);
         lensFlare.enabled = true;
-        lensFlare.uniforms.intensity = 3.5; // Massive glare
-        lensFlare.uniforms.distortion = 12.0; // Stretches light horizontally like a movie poster
+        lensFlare.uniforms.intensity = 3.0;
+        lensFlare.uniforms.distortion = 10.0;
         lensFlare.uniforms.ghostDispersal = 0.4;
         lensFlare.uniforms.haloWidth = 0.6;
         lensFlare.uniforms.dirtAmount = 0.5;
     } catch(e) {}
 
-    // Cinematic start view: Looking at Earth with the sun glaring from the top edge
     const startLocation = Cesium.Cartesian3.fromDegrees(-40.0, 20.0, 28000000);
     viewer.camera.setView({
         destination: startLocation,
         orientation: {
             heading: 0.0,
-            pitch: Cesium.Math.toRadians(-80.0), // Tilted up slightly to catch the sun flare
+            pitch: Cesium.Math.toRadians(-80.0),
             roll: 0.0
         }
     });
