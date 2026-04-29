@@ -34,9 +34,38 @@ const initDigitalTwin = async () => {
     viewer.scene.globe.showWaterEffect = false;
     viewer.scene.globe.depthTestAgainstTerrain = false;
 
+    viewer.clock.currentTime = Cesium.JulianDate.fromIso8601("2024-05-21T14:30:00Z");
+
+    viewer.scene.skyAtmosphere.brightnessShift = 0.3;
+    viewer.scene.skyAtmosphere.saturationShift = 0.2;
+    viewer.scene.skyAtmosphere.hueShift = -0.05;
+
+    const bloom = viewer.scene.postProcessStages.bloom;
+    bloom.enabled = true;
+    bloom.uniforms.glowOnly = false;
+    bloom.uniforms.contrast = 1.1;
+    bloom.uniforms.brightness = -0.1;
+    bloom.uniforms.delta = 1.0;
+    bloom.uniforms.sigma = 2.5;
+    bloom.uniforms.stepSize = 1.5;
+
+    const lensFlare = Cesium.PostProcessStageLibrary.createLensFlareStage();
+    viewer.scene.postProcessStages.add(lensFlare);
+    lensFlare.enabled = true;
+    lensFlare.uniforms.intensity = 2.5;
+    lensFlare.uniforms.distortion = 8.0;
+    lensFlare.uniforms.ghostDispersal = 0.45;
+    lensFlare.uniforms.haloWidth = 0.4;
+    lensFlare.uniforms.dirtAmount = 0.5;
+
     const startLocation = Cesium.Cartesian3.fromDegrees(-74.006, 40.7128, 25000000);
     viewer.camera.setView({
-        destination: startLocation
+        destination: startLocation,
+        orientation: {
+            heading: 0.0,
+            pitch: Cesium.Math.toRadians(-90.0),
+            roll: 0.0
+        }
     });
 
     document.getElementById('btn-space').addEventListener('click', () => {
