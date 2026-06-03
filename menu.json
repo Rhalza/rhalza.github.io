@@ -13,7 +13,7 @@
         {
             "id": "other",
             "name": "Other",
-            "pages": 1
+            "pages": 0
         }
     ],
     "pages": [
@@ -46,11 +46,6 @@
             "name": "UNO w/ Bots",
             "url": "uno.html",
             "section": "projects"
-        },
-        {
-            "name": "My Music",
-            "url": "music.html",
-            "section": "other"
         },
         {
             "name": "About Rhalza",
