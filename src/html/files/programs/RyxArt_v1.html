@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>RyxArt</title>
+    <style>
+        :root {
+            --bg-color: #2c2c2c;
+            --panel-color: #3a3a3a;
+            --border-color: #555;
+            --text-color: #f0f0f0;
+            --highlight-color: #00aaff;
+            --active-color: #0077bb;
+            --input-bg: #444;
+            --danger-color: #c0392b;
+            --modal-bg: rgba(0,0,0,0.7);
+        }
+
+        html, body {
+            margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color); color: var(--text-color);
+            overscroll-behavior-y: contain;
+        }
+
+        .app-container { display: flex; width: 100%; height: 100%; position: relative; }
+        .sidebar {
+            width: 280px; background-color: var(--panel-color); padding: 15px;
+            display: flex; flex-direction: column; gap: 15px; overflow-y: auto;
+            border-right: 1px solid var(--border-color); z-index: 100;
+            transition: transform 0.3s ease-in-out; flex-shrink: 0;
+        }
+        .main-content { flex-grow: 1; display: flex; flex-direction: column; background-color: var(--bg-color); }
+        .top-bar {
+            background-color: var(--panel-color); padding: 8px 15px; border-bottom: 1px solid var(--border-color);
+            display: flex; align-items: center; gap: 15px; flex-wrap: wrap; z-index: 50;
+        }
+        .canvas-area { flex-grow: 1; position: relative; overflow: hidden; touch-action: none; }
+        #drawing-canvas {
+            position: absolute; top: 0; left: 0; transform-origin: 0 0;
+            cursor: crosshair; background-color: white; box-shadow: 0 0 15px rgba(0,0,0,0.5);
+        }
+
+        .panel-section { background-color: var(--bg-color); border: 1px solid var(--border-color); border-radius: 5px; padding: 10px; }
+        .panel-section h3 { margin: 0 0 10px 0; font-size: 1em; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
+        .tools-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); gap: 8px; }
+        .tool-btn { background-color: var(--input-bg); border: 1px solid var(--border-color); color: var(--text-color); font-size: 20px; padding: 8px; border-radius: 4px; cursor: pointer; transition: background-color 0.2s, border-color 0.2s; display: flex; justify-content: center; align-items: center; }
+        .tool-btn:hover { background-color: #555; }
+        .tool-btn.active { background-color: var(--active-color); border-color: var(--highlight-color); }
+        .tool-option { margin-bottom: 12px; }
+        .tool-option label { display: block; margin-bottom: 5px; font-size: 0.9em; }
+        input[type="range"] { width: 100%; cursor: pointer; }
+        #color-picker-preview { width: 100%; height: 40px; border-radius: 4px; border: 1px solid var(--border-color); cursor: pointer; }
+        #layers-list { list-style: none; padding: 0; margin: 0; max-height: 200px; overflow-y: auto; }
+        .layer-item { display: flex; align-items: center; gap: 10px; padding: 8px; background-color: var(--input-bg); border: 1px solid var(--border-color); border-radius: 4px; margin-bottom: 5px; cursor: pointer; transition: background-color 0.2s, border-color 0.2s; }
+        .layer-item.active { background-color: var(--active-color); border-color: var(--highlight-color); }
+        .layer-name { flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .layer-visibility { font-size: 16px; }
+        .controls-grid { display: flex; gap: 8px; margin-top: 10px; }
+        .control-btn { flex-grow: 1; background-color: var(--input-bg); border: 1px solid var(--border-color); color: var(--text-color); border-radius: 4px; cursor: pointer; padding: 6px; font-size: 12px; text-decoration: none; text-align: center; }
+        .control-btn:hover { background-color: #555; }
+        .control-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        #clear-all-btn { background-color: var(--danger-color); }
+        #import-image-label { padding: 6px; text-align: center; }
+        
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--modal-bg); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background-color: var(--panel-color); padding: 25px; border-radius: 8px; border: 1px solid var(--border-color); min-width: 300px; max-width: 90%; }
+        .modal-content h2 { margin-top: 0; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; }
+        .form-group input { width: calc(100% - 10px); padding: 5px; background: var(--input-bg); border: 1px solid var(--border-color); color: var(--text-color); border-radius: 4px; }
+        #create-doc-btn { width: 100%; padding: 10px; font-size: 1em; background-color: var(--active-color); border: none; color: white; border-radius: 4px; cursor: pointer; }
+
+        .color-picker-content { max-width: 350px; }
+        .color-picker-main { display: flex; gap: 10px; margin-bottom: 15px; }
+        #color-picker-field, #color-picker-hue-slider { border: 1px solid var(--border-color); border-radius: 4px; cursor: crosshair; }
+        .color-picker-controls { display: flex; align-items: center; gap: 15px; }
+        #color-picker-new-preview { width: 50px; height: 50px; border-radius: 50%; border: 1px solid var(--border-color); flex-shrink: 0; }
+        .color-inputs { flex-grow: 1; }
+        #color-hex-input { width: 100%; box-sizing: border-box; }
+
+        #menu-toggle-btn { display: none; }
+        @media (max-width: 768px) {
+            .sidebar { position: absolute; top: 0; left: 0; height: 100%; transform: translateX(-100%); box-shadow: 2px 0 10px rgba(0,0,0,0.5); }
+            .sidebar.open { transform: translateX(0); }
+            #menu-toggle-btn { display: block; font-size: 24px; background: none; border: none; color: var(--text-color); cursor: pointer; }
+            .sidebar-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 99; }
+            .sidebar.open + .main-content .sidebar-overlay { display: block; }
+        }
+    </style>
+</head>
+<body>
+    <div id="new-doc-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>Create New Drawing</h2>
+            <form id="new-doc-form"><div class="form-group"><label for="doc-width">Width (px)</label><input type="number" id="doc-width" value="1920" required></div><div class="form-group"><label for="doc-height">Height (px)</label><input type="number" id="doc-height" value="1080" required></div><button type="submit" id="create-doc-btn">Start Drawing</button></form>
+        </div>
+    </div>
+    <div class="app-container">
+        <div class="sidebar" id="sidebar">
+            <div class="panel-section"><h3>Tools</h3><div class="tools-grid"><button class="tool-btn active" data-tool="brush" title="Brush">🖌️</button><button class="tool-btn" data-tool="eraser" title="Eraser">🧼</button><button class="tool-btn" data-tool="fill" title="Fill Bucket">💧</button><button class="tool-btn" data-tool="eyedropper" title="Eyedropper">🎨</button><button class="tool-btn" data-tool="line" title="Line Tool">╲</button><button class="tool-btn" data-tool="rect" title="Rectangle Tool">⬜</button><button class="tool-btn" data-tool="pan" title="Pan/Zoom Tool">🖐️</button></div></div>
+            <div class="panel-section"><h3>Brush Options</h3><div class="tool-option"><label for="color-picker-preview">Color</label><div id="color-picker-preview"></div></div><div class="tool-option"><label for="brush-size">Size: <span id="brush-size-value">10</span></label><input type="range" id="brush-size" min="1" max="200" value="10"></div><div class="tool-option"><label for="brush-opacity">Opacity: <span id="brush-opacity-value">1.0</span></label><input type="range" id="brush-opacity" min="0" max="1" step="0.01" value="1"></div><div class="tool-option"><label for="brush-hardness">Hardness: <span id="brush-hardness-value">1.0</span></label><input type="range" id="brush-hardness" min="0" max="1" step="0.01" value="1"></div></div>
+            <div class="panel-section"><h3>Layers</h3><ul id="layers-list"></ul><div class="controls-grid"><button id="add-layer-btn" class="control-btn" title="Add Layer">➕</button><button id="remove-layer-btn" class="control-btn" title="Remove Layer">➖</button><button id="move-layer-up-btn" class="control-btn" title="Move Up">🔼</button><button id="move-layer-down-btn" class="control-btn" title="Move Down">🔽</button></div><div class="tool-option"><label for="layer-opacity">Layer Opacity: <span id="layer-opacity-value">1.0</span></label><input type="range" id="layer-opacity" min="0" max="1" step="0.01" value="1"></div></div>
+            <div class="panel-section"><h3>File & Edit</h3><div class="controls-grid"><button id="undo-btn" class="control-btn">Undo</button><button id="redo-btn" class="control-btn">Redo</button></div><div class="controls-grid"><input type="file" id="import-image-input" accept="image/*" style="display: none;"><label for="import-image-input" id="import-image-label" class="control-btn">Import</label><a id="export-btn" class="control-btn" download="drawing.png">Export</a></div></div>
+        </div>
+        <div class="main-content">
+            <div class="sidebar-overlay" id="sidebar-overlay"></div>
+            <div class="top-bar"><button id="menu-toggle-btn">☰</button><button id="new-doc-button" class="control-btn">New</button><span>Zoom: <span id="zoom-level">100</span>%</span><button id="reset-view-btn" class="control-btn">Fit to Screen</button><button id="clear-all-btn" class="control-btn">Clear All</button></div>
+            <div class="canvas-area" id="canvas-area"><canvas id="drawing-canvas"></canvas></div>
+        </div>
+    </div>
+    <div id="color-picker-modal" class="modal-overlay" style="display: none; z-index: 1001;">
+        <div class="modal-content color-picker-content">
+            <h2>Select Color</h2>
+            <div class="color-picker-main">
+                <canvas id="color-picker-field" width="256" height="256"></canvas>
+                <canvas id="color-picker-hue-slider" width="30" height="256"></canvas>
+            </div>
+            <div class="color-picker-controls">
+                <div id="color-picker-new-preview"></div>
+                <div class="color-inputs">
+                     <label for="color-hex-input">HEX</label>
+                     <input type="text" id="color-hex-input" class="form-group input">
+                </div>
+            </div>
+            <button id="color-picker-confirm-btn" class="control-btn" style="width: 100%; margin-top: 15px; padding: 10px;">Select</button>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const appContainer = document.querySelector('.app-container'), canvas = document.getElementById('drawing-canvas'), ctx = canvas.getContext('2d', { willReadFrequently: true }), canvasArea = document.getElementById('canvas-area'), newDocModal = document.getElementById('new-doc-modal'), newDocForm = document.getElementById('new-doc-form'), newDocBtn = document.getElementById('new-doc-button'), sidebar = document.getElementById('sidebar'), menuToggleBtn = document.getElementById('menu-toggle-btn'), sidebarOverlay = document.getElementById('sidebar-overlay'), toolBtns = document.querySelectorAll('.tool-btn'), brushSizeSlider = document.getElementById('brush-size'), brushSizeValue = document.getElementById('brush-size-value'), brushOpacitySlider = document.getElementById('brush-opacity'), brushOpacityValue = document.getElementById('brush-opacity-value'), brushHardnessSlider = document.getElementById('brush-hardness'), brushHardnessValue = document.getElementById('brush-hardness-value'), layersList = document.getElementById('layers-list'), addLayerBtn = document.getElementById('add-layer-btn'), removeLayerBtn = document.getElementById('remove-layer-btn'), moveLayerUpBtn = document.getElementById('move-layer-up-btn'), moveLayerDownBtn = document.getElementById('move-layer-down-btn'), layerOpacitySlider = document.getElementById('layer-opacity'), layerOpacityValue = document.getElementById('layer-opacity-value'), undoBtn = document.getElementById('undo-btn'), redoBtn = document.getElementById('redo-btn'), importImageInput = document.getElementById('import-image-input'), exportBtn = document.getElementById('export-btn'), zoomLevelDisplay = document.getElementById('zoom-level'), resetViewBtn = document.getElementById('reset-view-btn'), clearAllBtn = document.getElementById('clear-all-btn');
+        const colorPickerPreview = document.getElementById('color-picker-preview'), colorPickerModal = document.getElementById('color-picker-modal'), colorPickerField = document.getElementById('color-picker-field'), colorPickerHueSlider = document.getElementById('color-picker-hue-slider'), colorPickerNewPreview = document.getElementById('color-picker-new-preview'), colorHexInput = document.getElementById('color-hex-input'), colorPickerConfirmBtn = document.getElementById('color-picker-confirm-btn');
+        const fieldCtx = colorPickerField.getContext('2d'), hueCtx = colorPickerHueSlider.getContext('2d');
+
+        let docWidth, docHeight;
+        let isDrawing = false;
+        let currentTool = 'brush';
+        let brushSize = 10;
+        let brushColor = '#000000';
+        let brushOpacity = 1.0;
+        let brushHardness = 1.0;
+        let strokePoints = [];
+        let layers = [], activeLayerIndex = -1;
+        let undoStack = [], redoStack = [], MAX_UNDO_STEPS = 30;
+        let scale = 1, panOffset = { x: 0, y: 0 }, isPanning = false, panStart = { x: 0, y: 0 }, pinchStartDist = 0;
+        let shapeStartPos, tempCanvas, tempCtx;
+        let isDocumentCreated = false;
+        let pickerHue = 0, pickerSat = 1, pickerVal = 0;
+        let isDraggingField = false, isDraggingHue = false;
+        
+        function init() {
+            addEventListeners();
+            initColorPicker();
+            appContainer.style.display = 'none';
+        }
+
+        function createDocument(width, height) {
+            isDocumentCreated = true;
+            docWidth = width;
+            docHeight = height;
+
+            newDocModal.style.display = 'none';
+            appContainer.style.display = 'flex';
+
+            canvas.width = docWidth;
+            canvas.height = docHeight;
+            canvas.style.width = `${docWidth}px`;
+            canvas.style.height = `${docHeight}px`;
+
+            if (!tempCanvas) {
+                tempCanvas = document.createElement('canvas');
+                tempCtx = tempCanvas.getContext('2d');
+            }
+            tempCanvas.width = docWidth;
+            tempCanvas.height = docHeight;
+
+            layers = [];
+            undoStack = [];
+            redoStack = [];
+            addNewLayer();
+            fitToScreen();
+        }
+        
+        function addEventListeners() {
+            newDocForm.addEventListener('submit', (e) => { e.preventDefault(); createDocument(parseInt(document.getElementById('doc-width').value, 10), parseInt(document.getElementById('doc-height').value, 10)); });
+            newDocBtn.addEventListener('click', () => newDocModal.style.display = 'flex');
+            canvasArea.addEventListener('mousedown', startAction);
+            canvasArea.addEventListener('mousemove', performAction);
+            window.addEventListener('mouseup', endAction);
+            canvasArea.addEventListener('touchstart', startAction, { passive: false });
+            canvasArea.addEventListener('touchmove', performAction, { passive: false });
+            window.addEventListener('touchend', endAction);
+            canvasArea.addEventListener('wheel', handleZoom, { passive: false });
+            window.addEventListener('resize', fitToScreen);
+            resetViewBtn.addEventListener('click', fitToScreen);
+            menuToggleBtn.addEventListener('click', () => sidebar.classList.toggle('open'));
+            sidebarOverlay.addEventListener('click', () => sidebar.classList.remove('open'));
+            toolBtns.forEach(btn => btn.addEventListener('click', () => switchTool(btn.dataset.tool)));
+            brushSizeSlider.addEventListener('input', (e) => { brushSize = e.target.value; brushSizeValue.textContent = brushSize; });
+            brushOpacitySlider.addEventListener('input', (e) => { brushOpacity = parseFloat(e.target.value); brushOpacityValue.textContent = brushOpacity.toFixed(2); });
+            brushHardnessSlider.addEventListener('input', (e) => { brushHardness = parseFloat(e.target.value); brushHardnessValue.textContent = brushHardness.toFixed(2); });
+            addLayerBtn.addEventListener('click', addNewLayer);
+            removeLayerBtn.addEventListener('click', removeActiveLayer);
+            moveLayerUpBtn.addEventListener('click', () => moveLayer(1));
+            moveLayerDownBtn.addEventListener('click', () => moveLayer(-1));
+            layerOpacitySlider.addEventListener('input', handleLayerOpacityChange);
+            undoBtn.addEventListener('click', undo);
+            redoBtn.addEventListener('click', redo);
+            importImageInput.addEventListener('change', importImage);
+            exportBtn.addEventListener('click', exportImage);
+            clearAllBtn.addEventListener('click', clearAllConfirm);
+        }
+        
+        function getEventCoords(e) { if (e.touches && e.touches.length) return { x: e.touches[0].clientX, y: e.touches[0].clientY }; if (e.changedTouches && e.changedTouches.length) return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY }; return { x: e.clientX, y: e.clientY }; }
+        function getCanvasCoords(eventCoords) { const rect = canvasArea.getBoundingClientRect(); return { x: (eventCoords.x - rect.left - panOffset.x) / scale, y: (eventCoords.y - rect.top - panOffset.y) / scale }; }
+
+        function startAction(e) {
+            e.preventDefault();
+            if (!isDocumentCreated) return;
+            const eventCoords = getEventCoords(e);
+            if (e.touches && e.touches.length === 2) {
+                isDrawing = false; isPanning = true;
+                panStart.x = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+                panStart.y = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+                pinchStartDist = Math.hypot(e.touches[1].clientX - e.touches[0].clientX, e.touches[1].clientY - e.touches[0].clientY);
+                return;
+            }
+            if (currentTool === 'pan' || (e.button === 1 && !(e.touches))) {
+                isPanning = true; panStart.x = eventCoords.x - panOffset.x; panStart.y = eventCoords.y - panOffset.y;
+                canvas.style.cursor = 'grabbing';
+                return;
+            }
+            saveState();
+            isDrawing = true;
+            const canvasCoords = getCanvasCoords(eventCoords);
+            if (['brush', 'eraser'].includes(currentTool)) {
+                strokePoints = [canvasCoords]; draw();
+            } else if (['line', 'rect'].includes(currentTool)) {
+                shapeStartPos = canvasCoords;
+            } else if (['fill', 'eyedropper'].includes(currentTool)) {
+                handleInstantTools(canvasCoords);
+                isDrawing = false;
+            }
+        }
+        
+        function performAction(e) {
+            e.preventDefault();
+            if (!isDocumentCreated) return;
+            if (isPanning) {
+                const eventCoords = getEventCoords(e);
+                if (e.touches && e.touches.length === 2) {
+                    const currentPinchDist = Math.hypot(e.touches[1].clientX - e.touches[0].clientX, e.touches[1].clientY - e.touches[0].clientY);
+                    const newScale = scale * (currentPinchDist / pinchStartDist); handleZoom(e, newScale); pinchStartDist = currentPinchDist;
+                    const newPanCenterX = (e.touches[0].clientX + e.touches[1].clientX) / 2, newPanCenterY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+                    panOffset.x += newPanCenterX - panStart.x; panOffset.y += newPanCenterY - panStart.y;
+                    panStart = { x: newPanCenterX, y: newPanCenterY };
+                } else if (!e.touches) { panOffset.x = eventCoords.x - panStart.x; panOffset.y = eventCoords.y - panStart.y; }
+                updateCanvasTransform();
+                return;
+            }
+            if (!isDrawing) return;
+            const canvasCoords = getCanvasCoords(getEventCoords(e));
+            if (['brush', 'eraser'].includes(currentTool)) {
+                strokePoints.push(canvasCoords); draw();
+            } else if (['line', 'rect'].includes(currentTool)) {
+                renderAllLayers(); drawShape(tempCtx, shapeStartPos, canvasCoords, true); ctx.drawImage(tempCanvas, 0, 0);
+            }
+        }
+
+        function endAction(e) {
+            if (isPanning) { isPanning = false; canvas.style.cursor = getCursorForTool(currentTool); return; }
+            if (!isDrawing) return;
+            const activeCtx = getActiveCtx();
+            if(activeCtx) {
+                if (['brush', 'eraser'].includes(currentTool)) {
+                    draw(); strokePoints = [];
+                } else if (['line', 'rect'].includes(currentTool)) {
+                    tempCtx.clearRect(0, 0, docWidth, docHeight);
+                    const canvasCoords = getCanvasCoords(getEventCoords(e));
+                    drawShape(activeCtx, shapeStartPos, canvasCoords, false);
+                }
+            }
+            isDrawing = false;
+            activeCtx?.beginPath();
+            renderAllLayers();
+            redoStack = []; updateUndoRedoButtons();
+        }
+        
+        function draw() {
+            const activeCtx = getActiveCtx();
+            if (!activeCtx || strokePoints.length === 0) return;
+            activeCtx.lineCap = 'round';
+            activeCtx.lineJoin = 'round';
+            activeCtx.lineWidth = brushSize;
+            activeCtx.globalAlpha = brushOpacity;
+            activeCtx.globalCompositeOperation = (currentTool === 'eraser') ? 'destination-out' : 'source-over';
+            let style = (currentTool === 'eraser') ? 'rgba(0,0,0,1)' : brushColor;
+            activeCtx.strokeStyle = style;
+            activeCtx.fillStyle = style;
+            activeCtx.beginPath();
+            if (strokePoints.length < 3) {
+                const p0 = strokePoints[0];
+                activeCtx.moveTo(p0.x, p0.y);
+                if (strokePoints.length === 1) {
+                    activeCtx.arc(p0.x, p0.y, brushSize / 2, 0, 2 * Math.PI); activeCtx.fill();
+                } else {
+                    const p1 = strokePoints[1];
+                    activeCtx.lineTo(p1.x, p1.y); activeCtx.stroke();
+                }
+            } else {
+                let p0 = strokePoints[strokePoints.length - 3];
+                let p1 = strokePoints[strokePoints.length - 2];
+                let p2 = strokePoints[strokePoints.length - 1];
+                const mid1 = { x: (p0.x + p1.x) / 2, y: (p0.y + p1.y) / 2 };
+                const mid2 = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+                activeCtx.moveTo(mid1.x, mid1.y);
+                activeCtx.quadraticCurveTo(p1.x, p1.y, mid2.x, mid2.y);
+                activeCtx.stroke();
+            }
+            renderAllLayers();
+        }
+        
+        function drawShape(targetCtx, start, end, isPreview) { if (isPreview) { targetCtx.clearRect(0, 0, docWidth, docHeight); } targetCtx.lineWidth = brushSize; targetCtx.strokeStyle = brushColor; targetCtx.globalAlpha = brushOpacity; targetCtx.globalCompositeOperation = 'source-over'; targetCtx.beginPath(); if (currentTool === 'line') { targetCtx.moveTo(start.x, start.y); targetCtx.lineTo(end.x, end.y); } else if (currentTool === 'rect') { targetCtx.rect(start.x, start.y, end.x - start.x, end.y - start.y); } targetCtx.stroke(); targetCtx.globalAlpha = 1.0; }
+        function handleInstantTools(coords) { const activeCtx = getActiveCtx(); if (!activeCtx) return; if (currentTool === 'eyedropper') { const finalImage = getComposedImage(); const tempEyeCtx = document.createElement('canvas').getContext('2d'); tempEyeCtx.canvas.width = docWidth; tempEyeCtx.canvas.height = docHeight; tempEyeCtx.drawImage(finalImage, 0, 0); const pixel = tempEyeCtx.getImageData(Math.round(coords.x), Math.round(coords.y), 1, 1).data; const rgb = {r: pixel[0], g: pixel[1], b: pixel[2]}; updateColorFromRGB(rgb); switchTool('brush'); } else if (currentTool === 'fill') { floodFill(Math.round(coords.x), Math.round(coords.y), hexToRgba(brushColor, brushOpacity)); renderAllLayers(); } }
+        
+        function switchTool(tool){currentTool=tool;toolBtns.forEach(btn=>btn.classList.toggle('active',btn.dataset.tool===tool));canvas.style.cursor=getCursorForTool(tool);document.querySelector('.panel-section:nth-child(2)').style.display=['brush','eraser','line','rect'].includes(tool)?'block':'none';}
+        function getCursorForTool(tool){return{brush:'crosshair',eraser:'crosshair',line:'crosshair',rect:'crosshair',fill:'pointer',eyedropper:'pointer',pan:'grab'}[tool]||'default';}
+
+        function addNewLayer(){const newCanvas=document.createElement('canvas');newCanvas.width=docWidth;newCanvas.height=docHeight;const newCtx=newCanvas.getContext('2d');const layer={canvas:newCanvas,ctx:newCtx,name:`Layer ${layers.length+1}`,visible:true,opacity:1.0,};layers.splice(activeLayerIndex+1,0,layer);setActiveLayer(activeLayerIndex+1);}
+        function removeActiveLayer(){if(layers.length<=1){alert("Cannot remove the last layer.");return;}layers.splice(activeLayerIndex,1);setActiveLayer(Math.max(0,activeLayerIndex-1));}
+        function setActiveLayer(index){if(index<0||index>=layers.length)return;activeLayerIndex=index;const activeLayer=layers[activeLayerIndex];if(activeLayer){layerOpacitySlider.value=activeLayer.opacity;layerOpacityValue.textContent=activeLayer.opacity.toFixed(2);}updateLayersUI();renderAllLayers();}
+        function updateLayersUI(){layersList.innerHTML='';layers.slice().reverse().forEach((layer,i)=>{const realIndex=layers.length-1-i;const item=document.createElement('li');item.className='layer-item';item.classList.toggle('active',realIndex===activeLayerIndex);item.innerHTML=`<span class="layer-visibility">${layer.visible?'👁️':'➖'}</span> <span class="layer-name" title="${layer.name}">${layer.name}</span>`;item.querySelector('.layer-visibility').addEventListener('click',(e)=>{e.stopPropagation();layers[realIndex].visible=!layers[realIndex].visible;updateLayersUI();renderAllLayers();});item.querySelector('.layer-name').addEventListener('dblclick',()=>{const newName=prompt('Enter new layer name:',layer.name);if(newName){layer.name=newName;updateLayersUI();}});item.addEventListener('click',()=>setActiveLayer(realIndex));layersList.appendChild(item);});}
+        function handleLayerOpacityChange(e){if(activeLayerIndex>-1){const opacity=parseFloat(e.target.value);layers[activeLayerIndex].opacity=opacity;layerOpacityValue.textContent=opacity.toFixed(2);renderAllLayers();}}
+        function moveLayer(direction){if(activeLayerIndex>-1){const newIndex=activeLayerIndex-direction;if(newIndex<0||newIndex>=layers.length)return;const[layer]=layers.splice(activeLayerIndex,1);layers.splice(newIndex,0,layer);setActiveLayer(newIndex);}}
+        function getActiveCtx(){return(activeLayerIndex>-1)?layers[activeLayerIndex].ctx:null;}
+
+        function renderAllLayers() { if (!isDocumentCreated) return; ctx.clearRect(0, 0, docWidth, docHeight); ctx.fillStyle = 'white'; ctx.fillRect(0, 0, docWidth, docHeight); layers.forEach(layer => { if (layer.visible) { ctx.globalAlpha = layer.opacity; ctx.drawImage(layer.canvas, 0, 0); } }); ctx.globalAlpha = 1.0; }
+        function updateCanvasTransform() { canvas.style.transform = `translate(${panOffset.x}px, ${panOffset.y}px) scale(${scale})`; zoomLevelDisplay.textContent = Math.round(scale * 100); }
+        function handleZoom(e, newScale) { e.preventDefault(); const rect = canvasArea.getBoundingClientRect(); const eventCoords = e.touches ? { x: (e.touches[0].clientX + e.touches[1].clientX)/2, y: (e.touches[0].clientY + e.touches[1].clientY)/2 } : getEventCoords(e); const mouse = { x: eventCoords.x - rect.left, y: eventCoords.y - rect.top, }; const zoomFactor = newScale !== undefined ? newScale / scale : Math.exp((e.deltaY < 0 ? 1 : -1) * 0.1); panOffset.x = mouse.x - (mouse.x - panOffset.x) * zoomFactor; panOffset.y = mouse.y - (mouse.y - panOffset.y) * zoomFactor; scale *= zoomFactor; updateCanvasTransform(); }
+        function fitToScreen() { if (!isDocumentCreated) return; const areaRect = canvasArea.getBoundingClientRect(); const hScale = areaRect.width / docWidth, vScale = areaRect.height / docHeight; scale = Math.min(hScale, vScale) * 0.95; panOffset.x = (areaRect.width - docWidth * scale) / 2; panOffset.y = (areaRect.height - docHeight * scale) / 2; renderAllLayers(); updateCanvasTransform(); }
+        
+        function saveState(){if(activeLayerIndex<0)return;if(undoStack.length>=MAX_UNDO_STEPS)undoStack.shift();undoStack.push({imageData:layers[activeLayerIndex].ctx.getImageData(0,0,docWidth,docHeight),layerIndex:activeLayerIndex});redoStack=[];updateUndoRedoButtons();}
+        function undo(){if(undoStack.length===0)return;redoStack.push({imageData:layers[activeLayerIndex].ctx.getImageData(0,0,docWidth,docHeight),layerIndex:activeLayerIndex});const lastState=undoStack.pop();setActiveLayer(lastState.layerIndex);layers[lastState.layerIndex].ctx.putImageData(lastState.imageData,0,0);renderAllLayers();updateUndoRedoButtons();}
+        function redo(){if(redoStack.length===0)return;undoStack.push({imageData:layers[activeLayerIndex].ctx.getImageData(0,0,docWidth,docHeight),layerIndex:activeLayerIndex});const nextState=redoStack.pop();setActiveLayer(nextState.layerIndex);layers[nextState.layerIndex].ctx.putImageData(nextState.imageData,0,0);renderAllLayers();updateUndoRedoButtons();}
+        function updateUndoRedoButtons(){undoBtn.disabled=undoStack.length===0;redoBtn.disabled=redoStack.length===0;}
+        function getComposedImage(){const exportCanvas=document.createElement('canvas');exportCanvas.width=docWidth;exportCanvas.height=docHeight;const exportCtx=exportCanvas.getContext('2d');exportCtx.fillStyle='white';exportCtx.fillRect(0,0,docWidth,docHeight);layers.forEach(layer=>{if(layer.visible){exportCtx.globalAlpha=layer.opacity;exportCtx.drawImage(layer.canvas,0,0);}});return exportCanvas;}
+        function importImage(e){const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=(event)=>{const img=new Image();img.onload=()=>{const activeCtx=getActiveCtx();if(activeCtx){saveState();activeCtx.drawImage(img,0,0);renderAllLayers();}else{alert("Please select a layer first.");}};img.src=event.target.result;};reader.readAsDataURL(file);}
+        function exportImage(){exportBtn.href=getComposedImage().toDataURL('image/png');}
+        function clearAllConfirm(){if(confirm("Are you sure you want to clear all layers? This action cannot be undone.")){layers.forEach(layer=>layer.ctx.clearRect(0,0,docWidth,docHeight));renderAllLayers();undoStack=[];redoStack=[];updateUndoRedoButtons();}}
+        const rgbToHex=(r,g,b)=>"#"+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('');
+        function hexToRgba(hex,opacity=1){let c=hex.substring(1).split('');if(c.length===3)c=[c[0],c[0],c[1],c[1],c[2],c[2]];c='0x'+c.join('');return{r:(c>>16)&255,g:(c>>8)&255,b:c&255,a:Math.round(opacity*255)};}
+        function floodFill(startX,startY,fillColor){const activeCtx=getActiveCtx();if(!activeCtx)return;const imageData=activeCtx.getImageData(0,0,docWidth,docHeight);const data=imageData.data;const startPos=(startY*docWidth+startX)*4;const startColor={r:data[startPos],g:data[startPos+1],b:data[startPos+2],a:data[startPos+3]};if(JSON.stringify(fillColor)===JSON.stringify(startColor))return;const pixelStack=[[startX,startY]];while(pixelStack.length){const[x,y]=pixelStack.pop();const currentPos=(y*docWidth+x)*4;if(x<0||x>=docWidth||y<0||y>=docHeight||data[currentPos]!==startColor.r||data[currentPos+1]!==startColor.g||data[currentPos+2]!==startColor.b||data[currentPos+3]!==startColor.a)continue;data[currentPos]=fillColor.r;data[currentPos+1]=fillColor.g;data[currentPos+2]=fillColor.b;data[currentPos+3]=fillColor.a;pixelStack.push([x+1,y],[x-1,y],[x,y+1],[x,y-1]);}activeCtx.putImageData(imageData,0,0);}
+
+        function hsvToRgb(h, s, v) { let r, g, b, i = Math.floor(h * 6), f = h * 6 - i, p = v * (1 - s), q = v * (1 - f * s), t = v * (1 - (1 - f) * s); switch (i % 6) { case 0: r = v, g = t, b = p; break; case 1: r = q, g = v, b = p; break; case 2: r = p, g = v, b = t; break; case 3: r = p, g = q, b = v; break; case 4: r = t, g = p, b = v; break; case 5: r = v, g = p, b = q; break; } return { r: Math.round(r * 255), g: Math.round(g * 255), b: Math.round(b * 255) };}
+        function rgbToHsv(r, g, b) { r /= 255, g /= 255, b /= 255; let max = Math.max(r, g, b), min = Math.min(r, g, b); let h, s, v = max, d = max - min; s = max === 0 ? 0 : d / max; if (max === min) { h = 0; } else { switch (max) { case r: h = (g - b) / d + (g < b ? 6 : 0); break; case g: h = (b - r) / d + 2; break; case b: h = (r - g) / d + 4; break; } h /= 6; } return { h: h, s: s, v: v }; }
+        function initColorPicker() {
+            updateColorFromPicker();
+            colorPickerPreview.addEventListener('click', () => { colorPickerModal.style.display = 'flex'; drawPicker(); });
+            colorPickerConfirmBtn.addEventListener('click', () => { colorPickerModal.style.display = 'none'; });
+            colorHexInput.addEventListener('change', () => { const hex = colorHexInput.value; if (/^#[0-9A-F]{6}$/i.test(hex)) { updateColorFromHex(hex); drawPicker(); } });
+            const startDrag = (e, type) => { e.preventDefault(); if (type === 'hue') isDraggingHue = true; else isDraggingField = true; handleDrag(e, type); };
+            const stopDrag = () => { isDraggingField = false; isDraggingHue = false; };
+            const handleDrag = (e, type) => { if ((type === 'hue' && !isDraggingHue) || (type === 'field' && !isDraggingField)) return; const rect = (type === 'hue' ? colorPickerHueSlider : colorPickerField).getBoundingClientRect(); const eventCoords = getEventCoords(e); if (type === 'hue') { pickerHue = Math.min(Math.max(0, (eventCoords.y - rect.top) / rect.height), 1); } else { pickerSat = Math.min(Math.max(0, (eventCoords.x - rect.left) / rect.width), 1); pickerVal = 1 - Math.min(Math.max(0, (eventCoords.y - rect.top) / rect.height), 1); } updateColorFromPicker(); drawPicker(); };
+            colorPickerHueSlider.addEventListener('mousedown', (e) => startDrag(e, 'hue'));
+            colorPickerField.addEventListener('mousedown', (e) => startDrag(e, 'field'));
+            colorPickerHueSlider.addEventListener('touchstart', (e) => startDrag(e, 'hue'), { passive: false });
+            colorPickerField.addEventListener('touchstart', (e) => startDrag(e, 'field'), { passive: false });
+            window.addEventListener('mousemove', (e) => { handleDrag(e, 'hue'); handleDrag(e, 'field'); });
+            window.addEventListener('touchmove', (e) => { handleDrag(e, 'hue'); handleDrag(e, 'field'); }, { passive: false });
+            window.addEventListener('mouseup', stopDrag);
+            window.addEventListener('touchend', stopDrag);
+        }
+        function drawPicker() {
+            const w = colorPickerField.width, h = colorPickerField.height;
+            fieldCtx.clearRect(0, 0, w, h);
+            fieldCtx.fillStyle = `hsl(${pickerHue * 360}, 100%, 50%)`;
+            fieldCtx.fillRect(0, 0, w, h);
+            const satGradient = fieldCtx.createLinearGradient(0, 0, w, 0);
+            satGradient.addColorStop(0, 'rgba(255,255,255,1)'); satGradient.addColorStop(1, 'rgba(255,255,255,0)');
+            fieldCtx.fillStyle = satGradient; fieldCtx.fillRect(0, 0, w, h);
+            const valGradient = fieldCtx.createLinearGradient(0, 0, 0, h);
+            valGradient.addColorStop(0, 'rgba(0,0,0,0)'); valGradient.addColorStop(1, 'rgba(0,0,0,1)');
+            fieldCtx.fillStyle = valGradient; fieldCtx.fillRect(0, 0, w, h);
+            const x = pickerSat * w, y = (1 - pickerVal) * h;
+            fieldCtx.strokeStyle = 'white'; fieldCtx.lineWidth = 3; fieldCtx.beginPath(); fieldCtx.arc(x, y, 7, 0, 2 * Math.PI); fieldCtx.stroke();
+            fieldCtx.strokeStyle = 'black'; fieldCtx.lineWidth = 1; fieldCtx.beginPath(); fieldCtx.arc(x, y, 7, 0, 2 * Math.PI); fieldCtx.stroke();
+            
+            const hueW = colorPickerHueSlider.width, hueH = colorPickerHueSlider.height;
+            hueCtx.clearRect(0,0, hueW, hueH);
+            const hueGradient = hueCtx.createLinearGradient(0, 0, 0, hueH);
+            for (let i = 0; i <= 1; i += 1/6) { hueGradient.addColorStop(i, `hsl(${i * 360}, 100%, 50%)`); }
+            hueCtx.fillStyle = hueGradient; hueCtx.fillRect(0, 0, hueW, hueH);
+            const hy = pickerHue * hueH;
+            hueCtx.fillStyle = 'white'; hueCtx.fillRect(0, hy - 2, hueW, 4);
+            hueCtx.fillStyle = 'black'; hueCtx.fillRect(0, hy - 1, hueW, 2);
+        }
+        function updateColorFromPicker() {
+            const rgb = hsvToRgb(pickerHue, pickerSat, pickerVal);
+            brushColor = rgbToHex(rgb.r, rgb.g, rgb.b);
+            colorPickerPreview.style.backgroundColor = brushColor;
+            colorPickerNewPreview.style.backgroundColor = brushColor;
+            colorHexInput.value = brushColor;
+        }
+        function updateColorFromHex(hex) {
+            brushColor = hex;
+            const rgb = hexToRgba(hex);
+            const hsv = rgbToHsv(rgb.r, rgb.g, rgb.b);
+            pickerHue = hsv.h; pickerSat = hsv.s; pickerVal = hsv.v;
+            colorPickerPreview.style.backgroundColor = brushColor;
+            colorPickerNewPreview.style.backgroundColor = brushColor;
+        }
+        function updateColorFromRGB(rgb) {
+            brushColor = rgbToHex(rgb.r, rgb.g, rgb.b);
+            const hsv = rgbToHsv(rgb.r, rgb.g, rgb.b);
+            pickerHue = hsv.h; pickerSat = hsv.s; pickerVal = hsv.v;
+            colorPickerPreview.style.backgroundColor = brushColor;
+            colorPickerNewPreview.style.backgroundColor = brushColor;
+            colorHexInput.value = brushColor;
+        }
+
+        init();
+    });
+    </script>
+</body>
+</html>
